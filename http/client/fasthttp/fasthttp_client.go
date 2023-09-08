@@ -1,4 +1,4 @@
-package client
+package fasthttp
 
 import (
 	"crypto/tls"
@@ -16,17 +16,32 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type FastHttpClient struct{}
+type fastHttpClient struct {
+	client *fasthttp.Client
+}
 
-var fastClient *fasthttp.Client
+var defaultClient fastHttpClient
 
 const (
 	DefaultTimeout  = 30 * time.Second
 	default_timeout = 10 * time.Second
 )
 
+func NewClient() *fastHttpClient {
+	return &fastHttpClient{}
+}
+
+func GetDefaultClient() fastHttpClient {
+	return defaultClient
+}
+
+func (c *fastHttpClient) SetClient(client *fasthttp.Client) {
+	c.client = client
+}
+
 func init() {
-	fastClient = &fasthttp.Client{
+	defaultClient = fastHttpClient{}
+	defaultClient.client = &fasthttp.Client{
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 		Dial: func(addr string) (net.Conn, error) {
 			return fasthttp.DialTimeout(addr, 3*time.Second)
@@ -40,7 +55,7 @@ func init() {
 	}
 }
 
-func (FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(doRequest)
 	response := fasthttp.AcquireResponse()
@@ -80,7 +95,7 @@ func (FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) 
 		timeOut = default_timeout
 	}
 	doRequest.SetTimeout(timeOut)
-	err = fastClient.DoRedirects(doRequest, response, 1)
+	err = c.client.Do(doRequest, response)
 	if err != nil {
 		logger.Error("[lb-fasthttp] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
@@ -90,34 +105,40 @@ func (FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) 
 	ct := string(response.Header.ContentType())
 	r.ContentType = ct
 	logger.Info("[lb-fasthttp] response statusCode:", sc, " content-type:", ct)
-	// if sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
-	// 	location := string(response.Header.Peek("Location"))
-	// 	logger.Warn("[lb-fasthttp] DoRedirects{ statusCode:", sc, ",location:", location, "}")
-	// 	if len(location) > 0 {
-	// 		response.Reset()
-	// 		doRequest.SetRequestURI(location)
-	// 		err = fastClient.DoTimeout(doRequest, response, timeOut)
-	// 		if err != nil {
-	// 			logger.Error("[lb-fasthttp] DoRedirects error:", err.Error(), ",", reqUrl, ",")
-	// 			return 0, err
-	// 		}
-	// 		sc = response.StatusCode()
-	// 		ct = string(response.Header.ContentType())
-	// 		logger.Info("[lb-fasthttp] DoRedirects response statusCode:", sc, " content-type:", ct)
-	// 	}
-	// }
+	var location string
+	if sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
+		location = string(response.Header.Peek("Location"))
+		// logger.Warn("[lb-fasthttp] DoRedirects{ statusCode:", sc, ",location:", location, "}")
+		// if len(location) > 0 {
+		// 	response.Reset()
+		// 	doRequest.SetRequestURI(location)
+		// 	err = fastClient.DoTimeout(doRequest, response, timeOut)
+		// 	if err != nil {
+		// 		logger.Error("[lb-fasthttp] DoRedirects error:", err.Error(), ",", reqUrl, ",")
+		// 		return 0, err
+		// 	}
+		// 	sc = response.StatusCode()
+		// 	ct = string(response.Header.ContentType())
+		// 	logger.Info("[lb-fasthttp] DoRedirects response statusCode:", sc, " content-type:", ct)
+		// }
+	}
 	b := response.Body()
 	r.Body = b
-	if sc != http.StatusOK {
-		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b))
-		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
-	}
+	cookie := fasthttp.AcquireCookie()
+	defer fasthttp.ReleaseCookie(cookie)
 	response.Header.VisitAllCookie(func(key, value []byte) {
-		r.Cookie[string(key)] = string(value)
+		cookie.ParseBytes(value)
+		val := string(cookie.Value())
+		val, _ = url.QueryUnescape(val)
+		r.Cookie[string(key)] = val
 	})
 	response.Header.VisitAll(func(key, value []byte) {
 		r.Headers[string(key)] = string(value)
 	})
+	if sc != http.StatusOK {
+		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
+		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
+	}
 	return r, nil
 }
 
@@ -130,7 +151,7 @@ func setFasthttpHeader(req *fasthttp.Request, headers map[string]string) {
 	}
 }
 
-func (FastHttpClient) CheckRetry(err error, status int) bool {
+func (fastHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
 		if err == fasthttp.ErrDialTimeout {
 			return true

@@ -19,11 +19,11 @@ import (
 	gResp "github.com/skirrund/gcloud/server/response"
 )
 
-type HertzHttpClient struct {
-	hertzClient *client.Client
+type hertzHttpClient struct {
+	client *client.Client
 }
 
-var hertzHttpClient HertzHttpClient
+var defaultHttpClient hertzHttpClient
 
 const (
 	DefaultTimeout = 30 * time.Second
@@ -32,13 +32,20 @@ const (
 	WriteTimeout   = RequestTimeOut
 )
 
-func (hhc *HertzHttpClient) SetClient(c *client.Client) {
-	hhc.hertzClient = c
+func NewClient() *hertzHttpClient {
+	return &hertzHttpClient{}
+}
+
+func (hhc *hertzHttpClient) SetClient(c *client.Client) {
+	hhc.client = c
+}
+func GetDefaultClient() hertzHttpClient {
+	return defaultHttpClient
 }
 
 func init() {
-	hertzHttpClient = HertzHttpClient{}
-	hertzHttpClient.hertzClient, _ = client.NewClient(
+	defaultHttpClient = hertzHttpClient{}
+	defaultHttpClient.client, _ = client.NewClient(
 		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
 		client.WithMaxConnDuration(DefaultTimeout),
 		client.WithMaxIdleConnDuration(DefaultTimeout),
@@ -48,14 +55,14 @@ func init() {
 	)
 }
 
-func (hhc HertzHttpClient) getClient() *client.Client {
-	if hhc.hertzClient == nil {
-		return hertzHttpClient.hertzClient
+func (hhc hertzHttpClient) getClient() *client.Client {
+	if hhc.client == nil {
+		return defaultHttpClient.client
 	}
-	return hhc.hertzClient
+	return hhc.client
 }
 
-func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := protocol.AcquireRequest()
 	defer protocol.ReleaseRequest(doRequest)
 	response := protocol.AcquireResponse()
@@ -95,10 +102,9 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		timeOut = DefaultTimeout
 	}
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
-
-	err = hhc.getClient().DoRedirects(context.Background(), doRequest, response, 1)
+	err = hhc.getClient().Do(context.Background(), doRequest, response)
 	if err != nil {
-		logger.Error("[lb-heartz-client] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
+		logger.Error("[lb-heartz-client] DoRedirects error:", err.Error(), ",", reqUrl, ",")
 		return r, err
 	}
 	sc := response.StatusCode()
@@ -108,17 +114,21 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	logger.Info("[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
 	b := response.Body()
 	r.Body = b
-	if sc != http.StatusOK {
-		logger.Error("[lb-heartz-client] StatusCode error:", sc, ",", reqUrl, ",", string(b))
-		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
-	}
-	cookies := response.Header.GetCookies()
-	for _, c := range cookies {
-		r.Cookie[string(c.GetKey())] = string(c.GetValue())
-	}
+	cookie := protocol.AcquireCookie()
+	defer protocol.ReleaseCookie(cookie)
+	response.Header.VisitAllCookie(func(key, value []byte) {
+		cookie.ParseBytes(value)
+		val := string(cookie.Value())
+		val, _ = url.QueryUnescape(val)
+		r.Cookie[string(key)] = val
+	})
 	respHeaders := response.Header.GetHeaders()
 	for _, h := range respHeaders {
 		r.Headers[string(h.GetKey())] = string(h.GetValue())
+	}
+	if sc != http.StatusOK {
+		logger.Error("[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
+		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
 	}
 	return r, nil
 }
@@ -132,7 +142,7 @@ func setHttpHeader(req *protocol.Request, headers map[string]string) {
 	}
 }
 
-func (HertzHttpClient) CheckRetry(err error, status int) bool {
+func (hertzHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
 		// if err == fasthttp.ErrDialTimeout {
 		// 	return true
