@@ -15,9 +15,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud/logger"
-	"github.com/skirrund/gcloud/server/decoder"
 	"github.com/skirrund/gcloud/server/request"
-	"github.com/skirrund/gcloud/utils"
+	gResp "github.com/skirrund/gcloud/server/response"
 )
 
 type HertzHttpClient struct {
@@ -56,19 +55,22 @@ func (hhc HertzHttpClient) getClient() *client.Client {
 	return hhc.hertzClient
 }
 
-func (hhc HertzHttpClient) Exec(req *request.Request) (statusCode int, err error) {
+func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := protocol.AcquireRequest()
 	defer protocol.ReleaseRequest(doRequest)
 	response := protocol.AcquireResponse()
 	defer protocol.ReleaseResponse(response)
 	reqUrl := req.Url
+	r = &gResp.Response{
+		Cookie:  make(map[string]string),
+		Headers: make(map[string]string),
+	}
 	if len(reqUrl) == 0 {
-		return 0, errors.New("[lb-heartz-client] request url  is empty")
+		return r, errors.New("[lb-heartz-client] request url  is empty")
 	}
 	params := req.Params
 	headers := req.Headers
 	isJson := req.IsJson
-	respResult := req.RespResult
 	doRequest.Header.SetMethod(req.Method)
 	doRequest.SetRequestURI(reqUrl)
 	defer func() {
@@ -97,28 +99,28 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (statusCode int, err error
 	err = hhc.getClient().DoRedirects(context.Background(), doRequest, response, 1)
 	if err != nil {
 		logger.Error("[lb-heartz-client] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
-		return 0, err
+		return r, err
 	}
 	sc := response.StatusCode()
+	r.StatusCode = sc
 	ct := string(response.Header.ContentType())
+	r.ContentType = ct
 	logger.Info("[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
 	b := response.Body()
+	r.Body = b
 	if sc != http.StatusOK {
 		logger.Error("[lb-heartz-client] StatusCode error:", sc, ",", reqUrl, ",", string(b))
-		return sc, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
+		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
 	}
-	d, err := decoder.GetDecoder(ct).DecoderObj(b, respResult)
-	_, ok := d.(decoder.StreamDecoder)
-	if !ok {
-		str := string(b)
-		if len(str) > 1000 {
-			str = utils.SubStr(str, 0, 1000)
-		}
-		logger.Info("[lb-heartz-client] response:", str)
-	} else {
-		logger.Info("[lb-heartz-client] response:stream not log")
+	cookies := response.Header.GetCookies()
+	for _, c := range cookies {
+		r.Cookie[string(c.GetKey())] = string(c.GetValue())
 	}
-	return sc, nil
+	respHeaders := response.Header.GetHeaders()
+	for _, h := range respHeaders {
+		r.Headers[string(h.GetKey())] = string(h.GetValue())
+	}
+	return r, nil
 }
 
 func setHttpHeader(req *protocol.Request, headers map[string]string) {

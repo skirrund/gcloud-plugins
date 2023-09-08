@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/skirrund/gcloud/logger"
-	"github.com/skirrund/gcloud/server/decoder"
 	"github.com/skirrund/gcloud/server/request"
-	"github.com/skirrund/gcloud/utils"
+	gResp "github.com/skirrund/gcloud/server/response"
 	"github.com/valyala/fasthttp"
 )
 
@@ -41,22 +40,24 @@ func init() {
 	}
 }
 
-func (FastHttpClient) Exec(req *request.Request) (statusCode int, err error) {
+func (FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(doRequest)
 	response := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(response)
 	reqUrl := req.Url
+	r = &gResp.Response{
+		Cookie:  make(map[string]string),
+		Headers: make(map[string]string),
+	}
 	if len(reqUrl) == 0 {
-		return 0, errors.New("[lb-fasthttp] request url  is empty")
+		return r, errors.New("[lb-fasthttp] request url  is empty")
 	}
 	params := req.Params
 	headers := req.Headers
 	isJson := req.IsJson
-	respResult := req.RespResult
 	doRequest.Header.SetMethod(req.Method)
 	doRequest.SetRequestURI(reqUrl)
-	reqHeader := &doRequest.Header
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error("[lb-fasthttp]] recover :", err)
@@ -65,16 +66,15 @@ func (FastHttpClient) Exec(req *request.Request) (statusCode int, err error) {
 	if req.Method != http.MethodGet && req.Method != http.MethodHead && params != nil {
 		bodyBytes, _ := io.ReadAll(params)
 		doRequest.SetBody(bodyBytes)
-		//doRequest.SetBodyStream(params, -1)
 		if isJson {
-			reqHeader.SetContentType("application/json;charset=utf-8")
+			doRequest.Header.SetContentType("application/json;charset=utf-8")
 		} else if req.HasFile {
 
 		} else {
-			reqHeader.SetContentType("application/x-www-form-urlencoded;charset=utf-8")
+			doRequest.Header.SetContentType("application/x-www-form-urlencoded;charset=utf-8")
 		}
 	}
-	setFasthttpHeader(reqHeader, headers)
+	setFasthttpHeader(doRequest, headers)
 	timeOut := req.TimeOut
 	if timeOut == 0 {
 		timeOut = default_timeout
@@ -83,10 +83,12 @@ func (FastHttpClient) Exec(req *request.Request) (statusCode int, err error) {
 	err = fastClient.DoRedirects(doRequest, response, 1)
 	if err != nil {
 		logger.Error("[lb-fasthttp] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
-		return 0, err
+		return r, err
 	}
 	sc := response.StatusCode()
+	r.StatusCode = sc
 	ct := string(response.Header.ContentType())
+	r.ContentType = ct
 	logger.Info("[lb-fasthttp] response statusCode:", sc, " content-type:", ct)
 	// if sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
 	// 	location := string(response.Header.Peek("Location"))
@@ -105,31 +107,26 @@ func (FastHttpClient) Exec(req *request.Request) (statusCode int, err error) {
 	// 	}
 	// }
 	b := response.Body()
+	r.Body = b
 	if sc != http.StatusOK {
 		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b))
-		return sc, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
+		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
 	}
-	d, err := decoder.GetDecoder(ct).DecoderObj(b, respResult)
-	_, ok := d.(decoder.StreamDecoder)
-	if !ok {
-		str := string(b)
-		if len(str) > 1000 {
-			str = utils.SubStr(str, 0, 1000)
-		}
-		logger.Info("[lb-fasthttp] response:", str)
-	} else {
-		logger.Info("[lb-fasthttp] response:stream not log")
-	}
-
-	return sc, nil
+	response.Header.VisitAllCookie(func(key, value []byte) {
+		r.Cookie[string(key)] = string(value)
+	})
+	response.Header.VisitAll(func(key, value []byte) {
+		r.Headers[string(key)] = string(value)
+	})
+	return r, nil
 }
 
-func setFasthttpHeader(header *fasthttp.RequestHeader, headers map[string]string) {
+func setFasthttpHeader(req *fasthttp.Request, headers map[string]string) {
 	if headers == nil {
 		return
 	}
 	for k, v := range headers {
-		header.Set(k, v)
+		req.Header.Set(k, v)
 	}
 }
 

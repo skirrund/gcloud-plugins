@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -18,6 +19,8 @@ import (
 const MAX_PRINT_BODY_LEN = 2048
 
 var reg = regexp.MustCompile(`.*\.(js|css|png|jpg|jpeg|gif|svg|webp|bmp|html|htm).*$`)
+
+var workPool = worker.Init(math.MaxUint16)
 
 func Cors(ctx context.Context, c *app.RequestContext) {
 	request := c.GetRequest()
@@ -72,7 +75,7 @@ func LoggingMiddleware(c context.Context, ctx *app.RequestContext) {
 	bb := rResp.Body()
 	respStatus := rResp.StatusCode()
 	respBody := getLogBodyStr(bb)
-	worker.AsyncExecute(func() {
+	workPool.Execute(func() {
 		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), start)
 	})
 }

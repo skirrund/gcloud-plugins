@@ -6,7 +6,7 @@ require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/cloudwego/hertz v0.6.8
 	github.com/gofiber/fiber/v2 v2.49.1
-	github.com/skirrund/gcloud v0.6.21-b1
+	github.com/skirrund/gcloud v0.6.21-b2
 	github.com/valyala/fasthttp v1.49.0
 )
 
@@ -41,6 +41,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
+	github.com/panjf2000/ants/v2 v2.8.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
