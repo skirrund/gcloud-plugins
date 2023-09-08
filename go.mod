@@ -6,8 +6,10 @@ require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/cloudwego/hertz v0.6.8
 	github.com/gofiber/fiber/v2 v2.49.1
-	github.com/skirrund/gcloud v0.6.21-b2
+	github.com/skirrund/gcloud v0.6.21-b3
 	github.com/valyala/fasthttp v1.49.0
+	gorm.io/driver/mysql v1.5.1
+	gorm.io/gorm v1.25.4
 )
 
 require (
@@ -80,6 +82,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.1 // indirect
-	gorm.io/gorm v1.25.4 // indirect
 )
