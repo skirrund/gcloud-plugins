@@ -6,7 +6,7 @@ require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/cloudwego/hertz v0.6.8
 	github.com/gofiber/fiber/v2 v2.49.1
-	github.com/skirrund/gcloud v0.6.21-b3
+	github.com/skirrund/gcloud v0.6.21-b6
 	github.com/valyala/fasthttp v1.49.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.4

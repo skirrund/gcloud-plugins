@@ -11,10 +11,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/client"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud/logger"
+	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
 )
@@ -69,8 +71,8 @@ func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	defer protocol.ReleaseResponse(response)
 	reqUrl := req.Url
 	r = &gResp.Response{
-		Cookie:  make(map[string]string),
-		Headers: make(map[string]string),
+		Cookies: make(map[string]*cookie.Cookie),
+		Headers: make(map[string][]string),
 	}
 	if len(reqUrl) == 0 {
 		return r, errors.New("[lb-heartz-client] request url  is empty")
@@ -98,7 +100,7 @@ func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	}
 	setHttpHeader(doRequest, headers)
 	timeOut := req.TimeOut
-	if timeOut == 0 {
+	if timeOut <= 0 {
 		timeOut = DefaultTimeout
 	}
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
@@ -114,23 +116,85 @@ func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	logger.Info("[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
 	b := response.Body()
 	r.Body = b
-	cookie := protocol.AcquireCookie()
-	defer protocol.ReleaseCookie(cookie)
+	ck := protocol.AcquireCookie()
+	defer protocol.ReleaseCookie(ck)
 	response.Header.VisitAllCookie(func(key, value []byte) {
-		cookie.ParseBytes(value)
-		val := string(cookie.Value())
+		ck.ParseBytes(value)
+		val := string(ck.Value())
 		val, _ = url.QueryUnescape(val)
-		r.Cookie[string(key)] = val
+		k := string(key)
+		r.Cookies[k] = &cookie.Cookie{
+			Key:      k,
+			Value:    val,
+			Expire:   ck.Expire(),
+			MaxAge:   ck.MaxAge(),
+			Domain:   string(ck.Domain()),
+			Path:     string(ck.Path()),
+			HttpOnly: ck.HTTPOnly(),
+			Secure:   ck.Secure(),
+			SameSite: getSameSite(ck.SameSite()),
+		}
 	})
-	respHeaders := response.Header.GetHeaders()
-	for _, h := range respHeaders {
-		r.Headers[string(h.GetKey())] = string(h.GetValue())
-	}
+	response.Header.VisitAll(func(key, value []byte) {
+		k := string(key)
+		val := string(value)
+		vals := r.Headers[k]
+		vals = append(vals, val)
+		r.Headers[k] = vals
+	})
 	if sc != http.StatusOK {
 		logger.Error("[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
 		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
 	}
 	return r, nil
+}
+
+func (hhc hertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, timeout time.Duration) error {
+	logger.Info("[startProxy-hertz]:", targetUrl)
+	creq := protocol.AcquireRequest()
+	defer protocol.ReleaseRequest(creq)
+	var err error
+	method := string(ctx.Method())
+	creq.Header.SetMethod(method)
+	if method != http.MethodGet && method != http.MethodHead {
+		creq.SetBody(ctx.Request.Body())
+	}
+	ctx.VisitAllHeaders(func(key, value []byte) {
+		creq.Header.SetBytesKV(key, value)
+	})
+	creq.Header.SetContentTypeBytes(ctx.ContentType())
+	creq.SetRequestURI(targetUrl)
+	resp := protocol.AcquireResponse()
+	defer protocol.ReleaseResponse(resp)
+	if timeout <= 0 {
+		timeout = RequestTimeOut
+	}
+	creq.SetOptions(config.WithRequestTimeout(timeout))
+	err = hhc.getClient().Do(context.Background(), creq, resp)
+	if err != nil {
+		return err
+	}
+	resp.Header.VisitAll(func(key, value []byte) {
+		ctx.Response.Header.SetBytesV(string(key), value)
+	})
+	sc := resp.StatusCode()
+	ctx.SetStatusCode(sc)
+	ctx.Response.SetBody(resp.Body())
+	return nil
+}
+
+func getSameSite(sameSite protocol.CookieSameSite) (s cookie.CookieSameSite) {
+	switch sameSite {
+	case protocol.CookieSameSiteDefaultMode:
+		return
+	case protocol.CookieSameSiteLaxMode:
+		s = cookie.CookieSameSiteLaxMode
+	case protocol.CookieSameSiteStrictMode:
+		s = cookie.CookieSameSiteStrictMode
+	case protocol.CookieSameSiteNoneMode:
+		s = cookie.CookieSameSiteNoneMode
+	}
+	return s
 }
 
 func setHttpHeader(req *protocol.Request, headers map[string]string) {

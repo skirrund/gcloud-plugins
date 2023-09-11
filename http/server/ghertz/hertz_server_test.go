@@ -29,6 +29,8 @@ func TestHertzServer(t *testing.T) {
 			fmt.Println(strs)
 			strs = PostFormArray(ctx, "t")
 			fmt.Println(strs)
+			ctx.Response.Header.Set("h1", "h1")
+			ctx.Response.Header.Add("h1", "h11")
 			ctx.JSON(http.StatusOK, strs)
 		})
 	})

@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/skirrund/gcloud/logger"
+	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
 	"github.com/valyala/fasthttp"
@@ -25,6 +27,7 @@ var defaultClient fastHttpClient
 const (
 	DefaultTimeout  = 30 * time.Second
 	default_timeout = 10 * time.Second
+	RequestTimeOut  = 5 * time.Minute
 )
 
 func NewClient() *fastHttpClient {
@@ -55,6 +58,13 @@ func init() {
 	}
 }
 
+func (hhc fastHttpClient) getClient() *fasthttp.Client {
+	if hhc.client == nil {
+		return defaultClient.client
+	}
+	return hhc.client
+}
+
 func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(doRequest)
@@ -62,8 +72,8 @@ func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	defer fasthttp.ReleaseResponse(response)
 	reqUrl := req.Url
 	r = &gResp.Response{
-		Cookie:  make(map[string]string),
-		Headers: make(map[string]string),
+		Cookies: make(map[string]*cookie.Cookie),
+		Headers: make(map[string][]string),
 	}
 	if len(reqUrl) == 0 {
 		return r, errors.New("[lb-fasthttp] request url  is empty")
@@ -124,22 +134,86 @@ func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	}
 	b := response.Body()
 	r.Body = b
-	cookie := fasthttp.AcquireCookie()
-	defer fasthttp.ReleaseCookie(cookie)
+	ck := fasthttp.AcquireCookie()
+	defer fasthttp.ReleaseCookie(ck)
 	response.Header.VisitAllCookie(func(key, value []byte) {
-		cookie.ParseBytes(value)
-		val := string(cookie.Value())
+		ck.ParseBytes(value)
+		val := string(ck.Value())
 		val, _ = url.QueryUnescape(val)
-		r.Cookie[string(key)] = val
+		k := string(key)
+		r.Cookies[k] = &cookie.Cookie{
+			Key:      k,
+			Value:    val,
+			Expire:   ck.Expire(),
+			MaxAge:   ck.MaxAge(),
+			Domain:   string(ck.Domain()),
+			Path:     string(ck.Path()),
+			HttpOnly: ck.HTTPOnly(),
+			Secure:   ck.Secure(),
+			SameSite: getSameSite(ck.SameSite()),
+		}
 	})
 	response.Header.VisitAll(func(key, value []byte) {
-		r.Headers[string(key)] = string(value)
+		k := string(key)
+		val := string(value)
+		vals := r.Headers[k]
+		vals = append(vals, val)
+		r.Headers[k] = vals
 	})
 	if sc != http.StatusOK {
 		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
 		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
 	}
 	return r, nil
+}
+
+func (c fastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Duration) error {
+	logger.Info("[startProxy-fasthttp]:", targetUrl)
+	creq := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(creq)
+	var err error
+	req := ctx.Request()
+	ct := string(req.Header.ContentType())
+	method := string(req.Header.Method())
+	creq.Header.SetMethod(method)
+	if method != http.MethodGet && method != http.MethodHead {
+		creq.SetBody(req.Body())
+	}
+	for k, v := range ctx.GetReqHeaders() {
+		creq.Header.Set(k, v)
+	}
+	creq.Header.SetContentType(ct)
+	creq.SetRequestURI(targetUrl)
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+	if timeout <= 0 {
+		timeout = RequestTimeOut
+	}
+	creq.SetTimeout(timeout)
+	err = c.client.Do(creq, resp)
+	if err != nil {
+		return err
+	}
+	resp.Header.VisitAll(func(key, value []byte) {
+		ctx.Response().Header.SetBytesKV(key, value)
+	})
+	sc := resp.StatusCode()
+	ctx.Status(sc).Response().SetBody(resp.Body())
+	return nil
+}
+
+func getSameSite(sameSite fasthttp.CookieSameSite) (s cookie.CookieSameSite) {
+	switch sameSite {
+	case fasthttp.CookieSameSiteDefaultMode:
+		return
+	case fasthttp.CookieSameSiteLaxMode:
+		s = cookie.CookieSameSiteLaxMode
+	case fasthttp.CookieSameSiteStrictMode:
+		s = cookie.CookieSameSiteStrictMode
+	case fasthttp.CookieSameSiteNoneMode:
+		s = cookie.CookieSameSiteNoneMode
+	}
+	return s
 }
 
 func setFasthttpHeader(req *fasthttp.Request, headers map[string]string) {
