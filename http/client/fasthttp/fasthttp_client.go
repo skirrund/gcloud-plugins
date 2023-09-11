@@ -18,11 +18,11 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type fastHttpClient struct {
+type FastHttpClient struct {
 	client *fasthttp.Client
 }
 
-var defaultClient fastHttpClient
+var defaultClient FastHttpClient
 
 const (
 	DefaultTimeout  = 30 * time.Second
@@ -30,20 +30,16 @@ const (
 	RequestTimeOut  = 5 * time.Minute
 )
 
-func NewClient() *fastHttpClient {
-	return &fastHttpClient{}
-}
-
-func GetDefaultClient() fastHttpClient {
+func GetDefaultClient() FastHttpClient {
 	return defaultClient
 }
 
-func (c *fastHttpClient) SetClient(client *fasthttp.Client) {
+func (c *FastHttpClient) SetClient(client *fasthttp.Client) {
 	c.client = client
 }
 
 func init() {
-	defaultClient = fastHttpClient{}
+	defaultClient = FastHttpClient{}
 	defaultClient.client = &fasthttp.Client{
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 		Dial: func(addr string) (net.Conn, error) {
@@ -58,14 +54,14 @@ func init() {
 	}
 }
 
-func (hhc fastHttpClient) getClient() *fasthttp.Client {
+func (hhc FastHttpClient) getClient() *fasthttp.Client {
 	if hhc.client == nil {
 		return defaultClient.client
 	}
 	return hhc.client
 }
 
-func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(doRequest)
 	response := fasthttp.AcquireResponse()
@@ -167,7 +163,7 @@ func (c fastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	return r, nil
 }
 
-func (c fastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Duration) error {
+func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Duration) error {
 	logger.Info("[startProxy-fasthttp]:", targetUrl)
 	creq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(creq)
@@ -225,7 +221,7 @@ func setFasthttpHeader(req *fasthttp.Request, headers map[string]string) {
 	}
 }
 
-func (fastHttpClient) CheckRetry(err error, status int) bool {
+func (FastHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
 		if err == fasthttp.ErrDialTimeout {
 			return true

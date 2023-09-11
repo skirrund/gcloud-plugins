@@ -21,11 +21,11 @@ import (
 	gResp "github.com/skirrund/gcloud/server/response"
 )
 
-type hertzHttpClient struct {
+type HertzHttpClient struct {
 	client *client.Client
 }
 
-var defaultHttpClient hertzHttpClient
+var defaultHttpClient HertzHttpClient
 
 const (
 	DefaultTimeout = 30 * time.Second
@@ -34,19 +34,15 @@ const (
 	WriteTimeout   = RequestTimeOut
 )
 
-func NewClient() *hertzHttpClient {
-	return &hertzHttpClient{}
-}
-
-func (hhc *hertzHttpClient) SetClient(c *client.Client) {
+func (hhc *HertzHttpClient) SetClient(c *client.Client) {
 	hhc.client = c
 }
-func GetDefaultClient() hertzHttpClient {
+func GetDefaultClient() HertzHttpClient {
 	return defaultHttpClient
 }
 
 func init() {
-	defaultHttpClient = hertzHttpClient{}
+	defaultHttpClient = HertzHttpClient{}
 	defaultHttpClient.client, _ = client.NewClient(
 		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
 		client.WithMaxConnDuration(DefaultTimeout),
@@ -57,14 +53,14 @@ func init() {
 	)
 }
 
-func (hhc hertzHttpClient) getClient() *client.Client {
+func (hhc HertzHttpClient) getClient() *client.Client {
 	if hhc.client == nil {
 		return defaultHttpClient.client
 	}
 	return hhc.client
 }
 
-func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
 	doRequest := protocol.AcquireRequest()
 	defer protocol.ReleaseRequest(doRequest)
 	response := protocol.AcquireResponse()
@@ -149,7 +145,7 @@ func (hhc hertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	return r, nil
 }
 
-func (hhc hertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, timeout time.Duration) error {
+func (hhc HertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, timeout time.Duration) error {
 	logger.Info("[startProxy-hertz]:", targetUrl)
 	creq := protocol.AcquireRequest()
 	defer protocol.ReleaseRequest(creq)
@@ -206,7 +202,7 @@ func setHttpHeader(req *protocol.Request, headers map[string]string) {
 	}
 }
 
-func (hertzHttpClient) CheckRetry(err error, status int) bool {
+func (HertzHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
 		// if err == fasthttp.ErrDialTimeout {
 		// 	return true
