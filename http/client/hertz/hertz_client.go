@@ -102,7 +102,7 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
 	err = hhc.getClient().Do(context.Background(), doRequest, response)
 	if err != nil {
-		logger.Error("[lb-heartz-client] DoRedirects error:", err.Error(), ",", reqUrl, ",")
+		logger.Error("[lb-heartz-client] Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
 	}
 	sc := response.StatusCode()
@@ -209,12 +209,14 @@ func (HertzHttpClient) CheckRetry(err error, status int) bool {
 		if ok {
 			if ue.Err != nil {
 				no, ok := ue.Err.(*net.OpError)
+				logger.Info("[lb-heartz-client] checkRetry error url->*net.OpError:", ok)
 				if ok && no.Op == "dial" {
 					return true
 				}
 			}
 		} else {
 			no, ok := err.(*net.OpError)
+			logger.Info("[lb-heartz-client] checkRetry error *net.OpError:", ok)
 			if ok && no.Op == "dial" {
 				return true
 			}

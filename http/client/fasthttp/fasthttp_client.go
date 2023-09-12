@@ -227,16 +227,18 @@ func (FastHttpClient) CheckRetry(err error, status int) bool {
 			return true
 		}
 		ue, ok := err.(*url.Error)
-		logger.Info("[LB] checkRetry error *url.Error:", ok)
+		logger.Info("[lb-fasthttp] checkRetry error *url.Error:", ok)
 		if ok {
 			if ue.Err != nil {
 				no, ok := ue.Err.(*net.OpError)
+				logger.Info("[lb-fasthttp] checkRetry error url->*net.OpError:", ok)
 				if ok && no.Op == "dial" {
 					return true
 				}
 			}
 		} else {
 			no, ok := err.(*net.OpError)
+			logger.Info("[lb-fasthttp] checkRetry error *net.OpError:", ok)
 			if ok && no.Op == "dial" {
 				return true
 			}
