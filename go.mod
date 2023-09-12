@@ -6,10 +6,8 @@ require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/cloudwego/hertz v0.6.8
 	github.com/gofiber/fiber/v2 v2.49.1
-	github.com/skirrund/gcloud v0.6.21-b6
+	github.com/skirrund/gcloud v0.6.21-b7
 	github.com/valyala/fasthttp v1.49.0
-	gorm.io/driver/mysql v1.5.1
-	gorm.io/gorm v1.25.4
 )
 
 require (
@@ -27,15 +25,12 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.3 // indirect
-	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/henrylee2cn/ameda v1.4.10 // indirect
 	github.com/henrylee2cn/goutil v0.0.0-20210127050712-89660552f6f8 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect

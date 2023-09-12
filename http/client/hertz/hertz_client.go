@@ -204,9 +204,6 @@ func setHttpHeader(req *protocol.Request, headers map[string]string) {
 
 func (HertzHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
-		// if err == fasthttp.ErrDialTimeout {
-		// 	return true
-		// }
 		ue, ok := err.(*url.Error)
 		logger.Info("[lb-heartz-client] checkRetry error *url.Error:", ok)
 		if ok {
