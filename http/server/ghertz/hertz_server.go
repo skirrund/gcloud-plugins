@@ -14,6 +14,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
@@ -60,22 +61,38 @@ func (server *Server) Run(graceful ...func()) {
 	// 	ReadTimeout:  60 * time.Second,
 	// 	WriteTimeout: 60 * time.Second,
 	// }
-	go func() {
-		logger.Info("[Hertz] server starting on:", server.Options.Address)
-		if err := server.Svr.Engine.Run(); err != nil {
-			logger.Panic("[Hertz] listen:", err.Error())
-		}
-	}()
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	logger.Info("[Hertz]Shutting down server...")
-	if err := server.Svr.Shutdown(context.Background()); err != nil {
+	server.Svr.Engine.OnShutdown = append(server.Svr.Engine.OnShutdown, func(ctx context.Context) {
 		grace(server, graceful...)
-		logger.Panic("[Hertz]Server forced to shutdown:", err)
+		logger.Info("[Hertz]server has been shutdown")
+	})
+	server.Svr.SetCustomSignalWaiter(waitSignal)
+	logger.Info("[Hertz] server starting on:", server.Options.Address)
+	server.Svr.Spin()
+}
+
+func waitSignal(errCh chan error) error {
+	signalToNotify := []os.Signal{syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM}
+	if signal.Ignored(syscall.SIGHUP) {
+		signalToNotify = []os.Signal{syscall.SIGINT, syscall.SIGTERM}
 	}
-	grace(server, graceful...)
-	logger.Info("[Hertz]server has been shutdown")
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, signalToNotify...)
+	// graceful shutdown
+	select {
+	case sig := <-signals:
+		hlog.SystemLogger().Infof("Received signal: %s\n", sig)
+		switch sig {
+		case syscall.SIGTERM:
+			return nil
+		case syscall.SIGHUP, syscall.SIGINT:
+			return nil
+		}
+	case err := <-errCh:
+		// error occurs, exit immediately
+		return err
+	}
+	return nil
 }
 
 func grace(server *Server, g ...func()) {
