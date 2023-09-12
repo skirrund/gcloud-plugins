@@ -45,6 +45,7 @@ func init() {
 	defaultHttpClient = HertzHttpClient{}
 	defaultHttpClient.client, _ = client.NewClient(
 		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+		client.WithMaxConnsPerHost(1024),
 		client.WithMaxConnDuration(DefaultTimeout),
 		client.WithMaxIdleConnDuration(DefaultTimeout),
 		client.WithMaxConnWaitTimeout(5*time.Second),
