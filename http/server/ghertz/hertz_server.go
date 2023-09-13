@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,10 +16,12 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
 	gServer "github.com/skirrund/gcloud/server"
+	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/utils/validator"
 )
 
@@ -201,4 +204,50 @@ func PostFormArray(ctx *app.RequestContext, name string) []string {
 	} else {
 		return QueryArray(ctx, name)
 	}
+}
+
+func GetCookie(name string, ctx *app.RequestContext) string {
+	val := string(ctx.Cookie(name))
+	if len(val) > 0 {
+		val, _ = url.QueryUnescape(val)
+	}
+	return val
+}
+
+// del cookie
+// if len(keys)==0 this function will delete all cookies
+func ClearCookie(ctx *app.RequestContext, keys ...string) {
+	cookies := ctx.Request.Header.Cookies()
+	if len(cookies) > 0 {
+		if len(keys) == 0 {
+			for _, c := range cookies {
+				ctx.SetCookie(string(c.Key()), "DeleteMe", -1, string(c.Path()), string(c.Domain()), c.SameSite(), c.Secure(), c.HTTPOnly())
+			}
+		} else {
+			for _, k := range keys {
+				for _, c := range cookies {
+					name := string(c.Key())
+					if name == k {
+						ctx.SetCookie(string(c.Key()), "DeleteMe", -1, string(c.Path()), string(c.Domain()), c.SameSite(), c.Secure(), c.HTTPOnly())
+					}
+				}
+			}
+		}
+	}
+}
+
+func SetCookie(c cookie.Cookie, ctx *app.RequestContext) {
+	ctx.SetCookie(c.Key, url.QueryEscape(c.Value), c.MaxAge, c.Path, c.Domain, getSameSite(c.SameSite), c.Secure, c.HttpOnly)
+}
+
+func getSameSite(sameSite cookie.CookieSameSite) protocol.CookieSameSite {
+	switch sameSite {
+	case cookie.CookieSameSiteLaxMode:
+		return protocol.CookieSameSiteLaxMode
+	case cookie.CookieSameSiteStrictMode:
+		return protocol.CookieSameSiteStrictMode
+	case cookie.CookieSameSiteNoneMode:
+		return protocol.CookieSameSiteNoneMode
+	}
+	return protocol.CookieSameSiteDefaultMode
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -18,6 +19,7 @@ import (
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
 	"github.com/skirrund/gcloud/server"
+	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/utils/validator"
 )
 
@@ -268,4 +270,34 @@ func PostFormArray(ctx *fiber.Ctx, name string) []string {
 	} else {
 		return QueryArray(ctx, name)
 	}
+}
+
+func GetCookie(name string, ctx *fiber.Ctx) string {
+	val := ctx.Cookies(name)
+	if len(val) > 0 {
+		val, _ = url.QueryUnescape(val)
+	}
+	return val
+}
+
+// del cookie
+// if len(keys)==0 this function will delete all cookies
+func ClearCookie(ctx *fiber.Ctx, keys ...string) {
+	ctx.ClearCookie(keys...)
+}
+
+func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
+	fCookie := &fiber.Cookie{
+		Name:     c.Key,
+		Value:    url.QueryEscape(c.Value),
+		Path:     c.Path,
+		Domain:   c.Domain,
+		MaxAge:   c.MaxAge,
+		Secure:   c.Secure,
+		HTTPOnly: c.HttpOnly,
+	}
+	if len(c.SameSite) > 0 {
+		fCookie.SameSite = string(c.SameSite)
+	}
+	ctx.Cookie(fCookie)
 }
