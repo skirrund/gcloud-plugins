@@ -6,7 +6,7 @@ require (
 	github.com/bytedance/sonic v1.10.0
 	github.com/cloudwego/hertz v0.6.8
 	github.com/gofiber/fiber/v2 v2.49.1
-	github.com/skirrund/gcloud v0.6.21-b9
+	github.com/skirrund/gcloud v0.6.21
 	github.com/valyala/fasthttp v1.49.0
 )
 
