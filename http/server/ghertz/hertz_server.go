@@ -32,8 +32,10 @@ type Server struct {
 
 const (
 	CookieDeleteMe     = "DeleteMe"
-	CookieDeleteMaxAge = -1
+	CookieDeleteMaxAge = 0
 )
+
+var CookieExpireDelete = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
 func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz), middlewares ...app.HandlerFunc) gServer.Server {
 	srv := &Server{}
@@ -221,18 +223,26 @@ func GetCookie(name string, ctx *app.RequestContext) string {
 
 // del cookie
 // if len(keys)==0 this function will delete all cookies
-func ClearCookie(ctx *app.RequestContext, keys ...string) {
+func ClearCookie(ctx *app.RequestContext, domain string, path string, keys ...string) {
 	cookies := ctx.Request.Header.Cookies()
 	l := len(keys)
 	if len(cookies) > 0 {
 		for _, c := range cookies {
+			dm := string(c.Domain())
+			if len(domain) > 0 {
+				dm = domain
+			}
+			p := string(c.Path())
+			if len(path) > 0 {
+				p = path
+			}
 			name := string(c.Key())
 			if l == 0 {
-				ctx.SetCookie(name, "DeleteMe", -1, string(c.Path()), string(c.Domain()), c.SameSite(), c.Secure(), c.HTTPOnly())
+				ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, dm, c.SameSite(), c.Secure(), c.HTTPOnly())
 			} else {
 				for _, k := range keys {
 					if name == k {
-						ctx.SetCookie(name, "DeleteMe", -1, string(c.Path()), string(c.Domain()), c.SameSite(), c.Secure(), c.HTTPOnly())
+						ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, domain, c.SameSite(), c.Secure(), c.HTTPOnly())
 					}
 				}
 			}

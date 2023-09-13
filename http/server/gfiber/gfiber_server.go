@@ -31,8 +31,10 @@ type Server struct {
 
 const (
 	CookieDeleteMe     = "DeleteMe"
-	CookieDeleteMaxAge = -1
+	CookieDeleteMaxAge = 0
 )
+
+var CookieExpireDelete = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
 func NewServer(options server.Options, routerProvider func(engine *fiber.App), middleware ...any) server.Server {
 	srv := &Server{}
@@ -288,7 +290,7 @@ func GetCookie(name string, ctx *fiber.Ctx) string {
 
 // del cookie
 // if len(keys)==0 this function will delete all cookies
-func ClearCookie(ctx *fiber.Ctx, keys ...string) {
+func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
 	length := len(keys)
 	ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
 		k := string(key)
@@ -301,8 +303,15 @@ func ClearCookie(ctx *fiber.Ctx, keys ...string) {
 			Path:     string(c.Path()),
 			Domain:   string(c.Domain()),
 			MaxAge:   CookieDeleteMaxAge,
+			Expires:  CookieExpireDelete,
 			Secure:   c.Secure(),
 			HTTPOnly: c.HTTPOnly(),
+		}
+		if len(domain) > 0 {
+			fCookie.Domain = domain
+		}
+		if len(path) > 0 {
+			fCookie.Path = path
 		}
 		if err == nil {
 			if length == 0 {
