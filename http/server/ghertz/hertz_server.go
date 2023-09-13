@@ -237,12 +237,14 @@ func ClearCookie(ctx *app.RequestContext, domain string, path string, keys ...st
 				p = path
 			}
 			name := string(c.Key())
-			if l == 0 {
-				ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, dm, c.SameSite(), c.Secure(), c.HTTPOnly())
-			} else {
-				for _, k := range keys {
-					if name == k {
-						ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, domain, c.SameSite(), c.Secure(), c.HTTPOnly())
+			if len(name) > 0 {
+				if l == 0 {
+					ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, dm, c.SameSite(), c.Secure(), c.HTTPOnly())
+				} else {
+					for _, k := range keys {
+						if name == k {
+							ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, domain, c.SameSite(), c.Secure(), c.HTTPOnly())
+						}
 					}
 				}
 			}
@@ -251,7 +253,9 @@ func ClearCookie(ctx *app.RequestContext, domain string, path string, keys ...st
 }
 
 func SetCookie(c cookie.Cookie, ctx *app.RequestContext) {
-	ctx.SetCookie(c.Key, url.QueryEscape(c.Value), c.MaxAge, c.Path, c.Domain, getSameSite(c.SameSite), c.Secure, c.HttpOnly)
+	if len(c.Key) > 0 {
+		ctx.SetCookie(c.Key, url.QueryEscape(c.Value), c.MaxAge, c.Path, c.Domain, getSameSite(c.SameSite), c.Secure, c.HttpOnly)
+	}
 }
 
 func getSameSite(sameSite cookie.CookieSameSite) protocol.CookieSameSite {

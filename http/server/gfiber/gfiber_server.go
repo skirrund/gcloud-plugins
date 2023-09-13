@@ -294,32 +294,34 @@ func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
 	length := len(keys)
 	ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
 		k := string(key)
-		c := fasthttp.AcquireCookie()
-		defer fasthttp.ReleaseCookie(c)
-		err := c.ParseBytes(value)
-		fCookie := &fiber.Cookie{
-			Name:     k,
-			Value:    CookieDeleteMe,
-			Path:     string(c.Path()),
-			Domain:   string(c.Domain()),
-			MaxAge:   CookieDeleteMaxAge,
-			Expires:  CookieExpireDelete,
-			Secure:   c.Secure(),
-			HTTPOnly: c.HTTPOnly(),
-		}
-		if len(domain) > 0 {
-			fCookie.Domain = domain
-		}
-		if len(path) > 0 {
-			fCookie.Path = path
-		}
-		if err == nil {
-			if length == 0 {
-				ctx.Cookie(fCookie)
-			} else {
-				for _, nk := range keys {
-					if nk == k {
-						ctx.Cookie(fCookie)
+		if len(key) > 0 {
+			c := fasthttp.AcquireCookie()
+			defer fasthttp.ReleaseCookie(c)
+			err := c.ParseBytes(value)
+			fCookie := &fiber.Cookie{
+				Name:     k,
+				Value:    CookieDeleteMe,
+				Path:     string(c.Path()),
+				Domain:   string(c.Domain()),
+				MaxAge:   CookieDeleteMaxAge,
+				Expires:  CookieExpireDelete,
+				Secure:   c.Secure(),
+				HTTPOnly: c.HTTPOnly(),
+			}
+			if len(domain) > 0 {
+				fCookie.Domain = domain
+			}
+			if len(path) > 0 {
+				fCookie.Path = path
+			}
+			if err == nil {
+				if length == 0 {
+					ctx.Cookie(fCookie)
+				} else {
+					for _, nk := range keys {
+						if nk == k {
+							ctx.Cookie(fCookie)
+						}
 					}
 				}
 			}
@@ -328,6 +330,9 @@ func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
 }
 
 func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
+	if len(c.Key) > 0 {
+		return
+	}
 	fCookie := &fiber.Cookie{
 		Name:     c.Key,
 		Value:    url.QueryEscape(c.Value),
