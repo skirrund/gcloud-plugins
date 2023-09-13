@@ -21,12 +21,18 @@ import (
 	"github.com/skirrund/gcloud/server"
 	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/utils/validator"
+	"github.com/valyala/fasthttp"
 )
 
 type Server struct {
 	Srv     *fiber.App
 	Options server.Options
 }
+
+const (
+	CookieDeleteMe     = "DeleteMe"
+	CookieDeleteMaxAge = -1
+)
 
 func NewServer(options server.Options, routerProvider func(engine *fiber.App), middleware ...any) server.Server {
 	srv := &Server{}
@@ -283,7 +289,33 @@ func GetCookie(name string, ctx *fiber.Ctx) string {
 // del cookie
 // if len(keys)==0 this function will delete all cookies
 func ClearCookie(ctx *fiber.Ctx, keys ...string) {
-	ctx.ClearCookie(keys...)
+	length := len(keys)
+	ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
+		k := string(key)
+		c := fasthttp.AcquireCookie()
+		defer fasthttp.ReleaseCookie(c)
+		err := c.ParseBytes(value)
+		fCookie := &fiber.Cookie{
+			Name:     k,
+			Value:    CookieDeleteMe,
+			Path:     string(c.Path()),
+			Domain:   string(c.Domain()),
+			MaxAge:   CookieDeleteMaxAge,
+			Secure:   c.Secure(),
+			HTTPOnly: c.HTTPOnly(),
+		}
+		if err == nil {
+			if length == 0 {
+				ctx.Cookie(fCookie)
+			} else {
+				for _, nk := range keys {
+					if nk == k {
+						ctx.Cookie(fCookie)
+					}
+				}
+			}
+		}
+	})
 }
 
 func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
