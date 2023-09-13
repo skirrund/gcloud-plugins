@@ -101,7 +101,7 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 		timeOut = default_timeout
 	}
 	doRequest.SetTimeout(timeOut)
-	err = c.client.Do(doRequest, response)
+	err = c.getClient().Do(doRequest, response)
 	if err != nil {
 		logger.Error("[lb-fasthttp] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
@@ -186,7 +186,7 @@ func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Dur
 		timeout = RequestTimeOut
 	}
 	creq.SetTimeout(timeout)
-	err = c.client.Do(creq, resp)
+	err = c.getClient().Do(creq, resp)
 	if err != nil {
 		return err
 	}
