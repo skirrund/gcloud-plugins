@@ -112,11 +112,17 @@ func grace(server *Server, g ...func()) {
 	}
 }
 
-// ShouldBindBody binds the request body to a struct.
-// It supports decoding the following content types based on the Content-Type header:
-// application/json, application/xml, application/x-www-form-urlencoded, multipart/form-data
-// If none of the content types above are matched, it will return a ErrUnprocessableEntity error
-func ShouldBindBody(ctx *app.RequestContext, obj any) error {
+// tag名称及使用方法
+// path	绑定 url 上的路径参数，相当于 hertz 路由{:param}或{*param}中拿到的参数。例如：如果定义的路由为：/v:version/example，可以把 path 的参数指定为路由参数：path:"version"，此时，url: http://127.0.0.1:8888/v1/example，可以绑定path参数"1"
+// form	绑定请求的 body 内容。content-type -> multipart/form-data 或 application/x-www-form-urlencoded，绑定 form 的 key-value
+// query	绑定请求的 query 参数
+// cookie	绑定请求的 cookie 参数
+// header	绑定请求的 header 参数
+// json	绑定请求的 body 内容 content-type -> application/json，绑定 json 参数
+// raw_body	绑定请求的原始 body(bytes)，绑定的字段名不指定，也能绑定参数。（注：raw_body 绑定优先级最低，当指定多个 tag 时，一旦其他 tag 成功绑定参数，则不会绑定 body 内容。）
+// 参数绑定优先级
+// path > form > query > cookie > header > json > raw_body
+func ShouldBind(ctx *app.RequestContext, obj any) error {
 	err := ctx.Bind(obj)
 	if err != nil {
 		return err
