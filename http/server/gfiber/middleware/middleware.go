@@ -25,10 +25,10 @@ func Cors(c *fiber.Ctx) error {
 	origin := string(request.Header.Peek("Origin"))
 	//接收客户端发送的origin （重要！）
 
-	request.Header.Set("Access-Control-Allow-Origin", origin)
-	request.Header.Set("Access-Control-Allow-Methods", "*")
-	request.Header.Set("Access-Control-Allow-Headers", "*")
-	request.Header.Set("Access-Control-Allow-Credentials", "true")
+	c.Response().Header.Set("Access-Control-Allow-Origin", origin)
+	c.Response().Header.Set("Access-Control-Allow-Methods", "*")
+	c.Response().Header.Set("Access-Control-Allow-Headers", "*")
+	c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
 	if method == "OPTIONS" {
 		return c.SendStatus(http.StatusOK)
 	} else {
