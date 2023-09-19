@@ -23,15 +23,10 @@ func TestHertzServer(t *testing.T) {
 		Address:    ":8080",
 	}
 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
-		engine.POST("/test", func(c context.Context, ctx *app.RequestContext) {
+		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
 			//t := &Test{}
-			strs := QueryArray(ctx, "t")
-			fmt.Println(strs)
-			strs = PostFormArray(ctx, "t")
-			fmt.Println(strs)
-			ctx.Response.Header.Set("h1", "h1")
-			ctx.Response.Header.Add("h1", "h11")
-			ctx.JSON(http.StatusOK, strs)
+			s := GetCookie("test", ctx)
+			ctx.JSON(http.StatusOK, s)
 		})
 	})
 	srv.Run(func() {

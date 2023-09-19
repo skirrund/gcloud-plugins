@@ -260,7 +260,7 @@ func ClearCookie(ctx *app.RequestContext, domain string, path string, keys ...st
 
 func SetCookie(c cookie.Cookie, ctx *app.RequestContext) {
 	if len(c.Key) > 0 {
-		ctx.SetCookie(c.Key, url.QueryEscape(c.Value), c.MaxAge, c.Path, c.Domain, getSameSite(c.SameSite), c.Secure, c.HttpOnly)
+		ctx.SetCookie(c.Key, c.Value, c.MaxAge, c.Path, c.Domain, getSameSite(c.SameSite), c.Secure, c.HttpOnly)
 	}
 }
 
