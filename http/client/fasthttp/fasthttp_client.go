@@ -176,7 +176,14 @@ func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Dur
 		creq.SetBody(req.Body())
 	}
 	for k, v := range ctx.GetReqHeaders() {
-		creq.Header.Set(k, v)
+		length := len(v)
+		for i := 0; i < length; i++ {
+			if i == 0 {
+				creq.Header.Set(k, v[i])
+			} else {
+				creq.Header.Add(k, v[i])
+			}
+		}
 	}
 	creq.Header.SetContentType(ct)
 	creq.SetRequestURI(targetUrl)
