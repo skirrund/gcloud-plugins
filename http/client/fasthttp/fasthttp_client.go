@@ -25,7 +25,7 @@ type FastHttpClient struct {
 var defaultClient FastHttpClient
 
 const (
-	DefaultTimeout  = 30 * time.Second
+	DefaultTimeout  = 10 * time.Second
 	default_timeout = 10 * time.Second
 	RequestTimeOut  = 5 * time.Minute
 )

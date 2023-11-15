@@ -28,7 +28,7 @@ type HertzHttpClient struct {
 var defaultHttpClient HertzHttpClient
 
 const (
-	DefaultTimeout = 30 * time.Second
+	DefaultTimeout = 10 * time.Second
 	ContentType    = "Content-Type"
 	RequestTimeOut = 5 * time.Minute
 	WriteTimeout   = RequestTimeOut
@@ -45,7 +45,7 @@ func init() {
 	defaultHttpClient = HertzHttpClient{}
 	defaultHttpClient.client, _ = client.NewClient(
 		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
-		client.WithMaxConnsPerHost(1024),
+		client.WithMaxConnsPerHost(0),
 		client.WithMaxConnDuration(DefaultTimeout),
 		client.WithMaxIdleConnDuration(DefaultTimeout),
 		client.WithMaxConnWaitTimeout(5*time.Second),
