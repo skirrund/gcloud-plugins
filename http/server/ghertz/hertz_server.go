@@ -33,6 +33,7 @@ type Server struct {
 const (
 	CookieDeleteMe     = "DeleteMe"
 	CookieDeleteMaxAge = 0
+	CookieDeleteVal    = ""
 )
 
 var CookieExpireDelete = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
@@ -245,11 +246,35 @@ func ClearCookie(ctx *app.RequestContext, domain string, path string, keys ...st
 			name := string(c.Key())
 			if len(name) > 0 {
 				if l == 0 {
-					ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, dm, c.SameSite(), c.Secure(), c.HTTPOnly())
+					cookie := protocol.AcquireCookie()
+					defer protocol.ReleaseCookie(cookie)
+					cookie.SetKey(name)
+					cookie.SetValue(CookieDeleteVal)
+					cookie.SetMaxAge(CookieDeleteMaxAge)
+					cookie.SetPath(p)
+					cookie.SetDomain(dm)
+					cookie.SetSecure(c.Secure())
+					cookie.SetHTTPOnly(c.HTTPOnly())
+					cookie.SetSameSite(c.SameSite())
+					cookie.SetExpire(time.Now().Add(-1 * time.Second))
+					ctx.Response.Header.SetCookie(cookie)
+					//ctx.SetCookie(name, CookieDeleteVal, CookieDeleteMaxAge, p, dm, c.SameSite(), c.Secure(), c.HTTPOnly())
 				} else {
 					for _, k := range keys {
 						if name == k {
-							ctx.SetCookie(name, CookieDeleteMe, CookieDeleteMaxAge, p, domain, c.SameSite(), c.Secure(), c.HTTPOnly())
+							cookie := protocol.AcquireCookie()
+							defer protocol.ReleaseCookie(cookie)
+							cookie.SetKey(name)
+							cookie.SetValue(CookieDeleteVal)
+							cookie.SetMaxAge(CookieDeleteMaxAge)
+							cookie.SetPath(p)
+							cookie.SetDomain(dm)
+							cookie.SetSecure(c.Secure())
+							cookie.SetHTTPOnly(c.HTTPOnly())
+							cookie.SetSameSite(c.SameSite())
+							cookie.SetExpire(time.Now().Add(-1 * time.Second))
+							ctx.Response.Header.SetCookie(cookie)
+							//ctx.SetCookie(name, CookieDeleteVal, -1, p, domain, c.SameSite(), c.Secure(), c.HTTPOnly())
 						}
 					}
 				}
