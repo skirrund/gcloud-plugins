@@ -11,6 +11,8 @@ import (
 func TestXxx(t *testing.T) {
 	var r []byte
 	lb.GetInstance().SetHttpClient(defaultHttpClient)
-	resp, err := http.PostJSONUrl("http://127.0.0.1:8080/test", nil, nil, &r)
-	fmt.Println(resp, err)
+	resp, err := http.GetUrl("https://www.baidu.com", nil, nil, &r)
+	fmt.Println(string(resp.Body), string(r))
+	r = r[:0]
+	fmt.Println(string(resp.Body), err)
 }

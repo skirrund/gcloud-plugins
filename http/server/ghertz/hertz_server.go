@@ -15,7 +15,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
-	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
@@ -92,7 +91,7 @@ func waitSignal(errCh chan error) error {
 	// graceful shutdown
 	select {
 	case sig := <-signals:
-		hlog.SystemLogger().Infof("Received signal: %s\n", sig)
+		logger.Info("Received signal:", sig)
 		switch sig {
 		case syscall.SIGTERM:
 			return nil

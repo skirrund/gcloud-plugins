@@ -37,10 +37,13 @@ func TestHertzServer(t *testing.T) {
 				MaxAge: 1800,
 			}
 			SetCookie(co, ctx)
+			qStr := ctx.Request.RequestURI()
+			str := string(qStr)
+			fmt.Println(str)
 			//t := &Test{}
 			// SetCookie()
-			s := GetCookie("test", ctx)
-			ctx.JSON(http.StatusOK, s)
+			//s := GetCookie("test", ctx)
+			ctx.JSON(http.StatusOK, str)
 		})
 		engine.GET("/del", func(c context.Context, ctx *app.RequestContext) {
 			ClearCookie(ctx, "", "", "test")
