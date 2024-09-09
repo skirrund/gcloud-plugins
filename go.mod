@@ -3,22 +3,22 @@ module github.com/skirrund/gcloud-plugins
 go 1.22
 
 require (
-	github.com/bytedance/sonic v1.12.1
-	github.com/cloudwego/hertz v0.9.2
+	github.com/bytedance/sonic v1.12.2
+	github.com/cloudwego/hertz v0.9.3
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/skirrund/gcloud v0.8.11
+	github.com/skirrund/gcloud v0.9.1
 	github.com/valyala/fasthttp v1.55.0
 )
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/bytedance/go-tagexpr/v2 v2.9.2 // indirect
-	github.com/bytedance/gopkg v0.0.0-20220413063733-65bf48ffb3a7 // indirect
+	github.com/bytedance/gopkg v0.1.0 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
-	github.com/cloudwego/netpoll v0.6.0 // indirect
+	github.com/cloudwego/netpoll v0.6.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -33,7 +33,7 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lestrrat-go/strftime v1.0.6 // indirect
+	github.com/lestrrat-go/strftime v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -67,7 +67,7 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
