@@ -9,7 +9,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/nacos-group/nacos-sdk-go/v2 v2.2.7
 	github.com/skirrund/gcloud v0.9.4
-	github.com/skirrund/gcloud-nacos v0.14.4
 	github.com/spf13/viper v1.19.0
 	github.com/valyala/fasthttp v1.55.0
 )
@@ -18,6 +17,7 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/AthenZ/athenz v1.10.39 // indirect
+	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/DataDog/zstd v1.5.0 // indirect
 	github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68 // indirect
 	github.com/alibabacloud-go/tea v1.1.17 // indirect

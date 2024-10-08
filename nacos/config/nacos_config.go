@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	nacos "github.com/skirrund/gcloud-nacos"
+	nacos "github.com/skirrund/gcloud-plugins/nacos"
 	"github.com/skirrund/gcloud/bootstrap/env"
 	commonConfig "github.com/skirrund/gcloud/config"
 	"github.com/skirrund/gcloud/logger"
