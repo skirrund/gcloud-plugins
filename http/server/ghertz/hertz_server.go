@@ -15,7 +15,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
-	"github.com/cloudwego/hertz/pkg/network/standard"
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
@@ -46,7 +45,6 @@ func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz
 	opts = append(opts, server.WithReadTimeout(5*time.Minute))
 	opts = append(opts, server.WithWriteTimeout(5*time.Minute))
 	opts = append(opts, server.WithHostPorts(options.Address))
-	server.WithTransport(standard.NewTransporter)
 	if options.IdleTimeout > 0 {
 		opts = append(opts, server.WithIdleTimeout(options.IdleTimeout))
 	}
