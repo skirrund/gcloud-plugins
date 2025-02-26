@@ -1,6 +1,6 @@
 module github.com/skirrund/gcloud-plugins
 
-go 1.22
+go 1.23
 
 require (
 	github.com/apache/pulsar-client-go v0.14.0

@@ -129,11 +129,12 @@ func (server *Server) Run(graceful ...func()) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	logger.Info("[Fiber]Shutting down server...")
-	if err := server.Srv.Shutdown(); err != nil {
+	if err := server.Srv.ShutdownWithTimeout(10 * time.Second); err != nil {
 		grace(server, graceful...)
 		logger.Panic("[Fiber]Server forced to shutdown:", err)
+	} else {
+		grace(server, graceful...)
 	}
-	grace(server, graceful...)
 	logger.Info("[Fiber]server has been shutdown")
 }
 
