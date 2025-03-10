@@ -148,7 +148,7 @@ func (nr *nacosRegistry) GetInstance(serviceName string) *registry.Instance {
 	instance, err := nr.client.SelectOneHealthyInstance(vo.SelectOneHealthInstanceParam{
 		ServiceName: serviceName,
 		GroupName:   nr.opts.RegistryOptions.Group,
-		//Clusters:    []string{"cluster-a"}, // default value is DEFAULT
+		// Clusters:    []string{"DEFAULT"}, // default value is DEFAULT
 	})
 	if err != nil {
 		logger.Error("[nacos] GetInstance error:" + err.Error())
@@ -165,7 +165,7 @@ func (nr *nacosRegistry) SelectInstances(serviceName string) ([]*registry.Instan
 	instance, err := nr.client.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: serviceName,
 		GroupName:   nr.opts.RegistryOptions.Group,
-		//Clusters:    []string{"cluster-a"}, // default value is DEFAULT
+		// Clusters:    []string{"DEFAULT"}, // default value is DEFAULT
 		HealthyOnly: true,
 	})
 	if err != nil {
@@ -187,7 +187,7 @@ func (nr *nacosRegistry) Subscribe(serviceName string) error {
 	err := nr.client.Subscribe(&vo.SubscribeParam{
 		ServiceName: serviceName,
 		GroupName:   nr.opts.RegistryOptions.Group, // default value is DEFAULT_GROUP
-		//Clusters:    []string{"cluster-a"},         // default value is DEFAULT
+		// Clusters:    []string{"DEFAULT"},           // default value is DEFAULT
 		SubscribeCallback: func(services []model.Instance, err error) {
 			logger.Info("[nacos] registry change:", services)
 			var instances = make([]*registry.Instance, len(services))

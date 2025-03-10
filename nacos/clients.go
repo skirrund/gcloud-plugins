@@ -13,6 +13,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 )
 
 func createServerConfig(addrs []string, contextPath string) []constant.ServerConfig {
@@ -46,7 +47,7 @@ func createServerConfig(addrs []string, contextPath string) []constant.ServerCon
 	return serverConfigs
 }
 
-func createClientConfig(opts interface{}) constant.ClientConfig {
+func createClientConfig(opts any) constant.ClientConfig {
 	var clientConfig constant.ClientConfig
 	if ccfg, ok := opts.(config.ClientOptions); ok {
 		logger.Infof("[nacos] init config client:%v", ccfg)
@@ -81,9 +82,9 @@ func CreateConfigClient(opts config.Options) (config_client.IConfigClient, error
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
-	client, err := clients.CreateConfigClient(map[string]interface{}{
-		"serverConfigs": sc,
-		"clientConfig":  cc,
+	client, err := clients.NewConfigClient(vo.NacosClientParam{
+		ClientConfig:  &cc,
+		ServerConfigs: sc,
 	})
 	return client, err
 }
@@ -92,9 +93,9 @@ func CreateNamingClient(opts registry.Options) (naming_client.INamingClient, err
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
-	client, err := clients.CreateNamingClient(map[string]interface{}{
-		"serverConfigs": sc,
-		"clientConfig":  cc,
+	client, err := clients.NewNamingClient(vo.NacosClientParam{
+		ClientConfig:  &cc,
+		ServerConfigs: sc,
 	})
 	return client, err
 }

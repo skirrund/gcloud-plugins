@@ -26,3 +26,4 @@ go.work
 xxl-job-test
 xxl-job-test-go
 DEFAULT_GROUP@@pbm-common-wechat-service
+DEFAULT_GROUP@@pbm-common-wechat-service@@DEFAULT

@@ -7,8 +7,8 @@ require (
 	github.com/bytedance/sonic v1.13.1
 	github.com/cloudwego/hertz v0.9.6
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/nacos-group/nacos-sdk-go/v2 v2.2.9
-	github.com/skirrund/gcloud v0.10.1
+	github.com/nacos-group/nacos-sdk-go/v2 v2.2.8
+	github.com/skirrund/gcloud v0.10.2
 	github.com/spf13/viper v1.19.0
 	github.com/valyala/fasthttp v1.59.0
 )
@@ -38,7 +38,6 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1800 // indirect
 	github.com/aliyun/alibabacloud-dkms-gcs-go-sdk v0.5.1 // indirect
 	github.com/aliyun/alibabacloud-dkms-transfer-go-sdk v0.1.8 // indirect
-	github.com/aliyun/aliyun-secretsmanager-client-go v1.1.5 // indirect
 	github.com/aliyun/credentials-go v1.4.3 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/ardielle/ardielle-go v1.5.2 // indirect
@@ -52,7 +51,6 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/netpoll v0.6.4 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -87,7 +85,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
 	github.com/onsi/gomega v1.27.6 // indirect
-	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc // indirect
 	github.com/panjf2000/ants/v2 v2.11.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
