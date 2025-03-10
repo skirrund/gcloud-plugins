@@ -8,21 +8,21 @@ import (
 )
 
 func TestRegistry(t *testing.T) {
-	N203 := "mse-32343d30-p.nacos-ans.mse.aliyuncs.com:8848"
-	N201 := "mse-6be4cfe0-p.nacos-ans.mse.aliyuncs.com:8848"
-	logger.Info(N201, N203)
+	N201 := "nacos1:8848"
 	ops := registry.Options{
-		ServerAddrs: []string{N203},
+		ServerAddrs: []string{N201},
 		ClientOptions: registry.ClientOptions{
 			AppName: "test",
 			LogDir:  "/Users/jerry.shi/logs/nacos/go",
 		},
 		RegistryOptions: registry.RegistryOptions{
-			ServiceName: "test",
+			ServiceName: "test-local",
 			ServicePort: 8899,
 			Version:     "0.1",
 		},
 	}
 	reg := NewRegistry(ops)
 	reg.RegisterInstance()
+	i := reg.GetInstance("pbm-common-wechat-service")
+	logger.Info(i)
 }

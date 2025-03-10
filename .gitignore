@@ -25,3 +25,4 @@ go.work
 .vscode
 xxl-job-test
 xxl-job-test-go
+DEFAULT_GROUP@@pbm-common-wechat-service
