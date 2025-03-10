@@ -81,7 +81,6 @@ func CreateConfigClient(opts config.Options) (config_client.IConfigClient, error
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
-	cc.NotLoadCacheAtStart = true
 	client, err := clients.CreateConfigClient(map[string]interface{}{
 		"serverConfigs": sc,
 		"clientConfig":  cc,
@@ -93,7 +92,6 @@ func CreateNamingClient(opts registry.Options) (naming_client.INamingClient, err
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
-	cc.NotLoadCacheAtStart = true
 	client, err := clients.CreateNamingClient(map[string]interface{}{
 		"serverConfigs": sc,
 		"clientConfig":  cc,
