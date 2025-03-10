@@ -19,11 +19,12 @@ import (
 )
 
 const (
-	NACOS_CONFIG_PREFIX_KEY         = "nacos.config.prefix"
-	NACOS_CONFIG_FILE_EXTENSION_KEY = "nacos.config.file-extension"
-	NACOS_CONFIG_SERVER_ADDR_KEY    = "nacos.config.server-addr"
-	NACOS_CONFIG_GROUP_KEY          = "nacos.config.group"
-	NACOS_CONFIG_NAMESPACE_KEY      = "nacos.config.namespace"
+	NACOS_CONFIG_PREFIX_KEY          = "nacos.config.prefix"
+	NACOS_CONFIG_FILE_EXTENSION_KEY  = "nacos.config.file-extension"
+	NACOS_CONFIG_SERVER_ADDR_KEY     = "nacos.config.server-addr"
+	NACOS_CONFIG_GROUP_KEY           = "nacos.config.group"
+	NACOS_CONFIG_NAMESPACE_KEY       = "nacos.config.namespace"
+	NACOS_CONFIG_NotLoadCacheAtStart = "nacos.config.notLoadCacheAtStart"
 )
 
 type nacosConfigCenter struct {
@@ -58,15 +59,20 @@ func defaultOptions() commonConfig.Options {
 	profile := cfg.GetString(env.SERVER_PROFILE_KEY)
 	dir := cfg.GetString(env.LOGGER_DIR_KEY) + "/" + serverName + "/" + host
 	logger.Info("[Bootstrap] start init nacos config center properties:[addrs=" + addr + "]" + ",[FileExtension=" + fe + "],[Group=" + group + "],[Prefix=" + prefix + "],[Namespace=" + ns + "],[Env=" + profile + "]")
-
+	notLoadCacheAtStartStr := cfg.GetString(NACOS_CONFIG_NotLoadCacheAtStart)
+	notLoadCacheAtStart := true
+	if strings.EqualFold(notLoadCacheAtStartStr, "false") {
+		notLoadCacheAtStart = false
+	}
 	options := commonConfig.Options{
 		ServerAddrs: strings.Split(addr, ","),
 		ClientOptions: commonConfig.ClientOptions{
 			NamespaceId: ns,
 			LogDir:      dir,
 			//CacheDir:    dir,
-			TimeoutMs: 5000,
-			AppName:   serverName,
+			TimeoutMs:           5000,
+			AppName:             serverName,
+			NotLoadCacheAtStart: notLoadCacheAtStart,
 		},
 		ConfigOptions: commonConfig.ConfigOptions{
 			Prefix:        prefix,

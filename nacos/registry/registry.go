@@ -34,7 +34,8 @@ type nacosRegistry struct {
 }
 
 const (
-	NACOS_DISCOVERY_SERVER_ADDE_KEY = "nacos.discovery.server-addr"
+	NACOS_DISCOVERY_SERVER_ADDE_KEY     = "nacos.discovery.server-addr"
+	NACOS_DISCOVERY_NotLoadCacheAtStart = "nacos.discovery.notLoadCacheAtStart"
 )
 
 var registryCenter *nacosRegistry
@@ -46,15 +47,20 @@ func defaultOptions() registry.Options {
 	serverPort := cfg.GetUint64(env.SERVER_PORT_KEY)
 	host, _ := os.Hostname()
 	dir := cfg.GetString(env.LOGGER_DIR_KEY) + "/" + serverName + "/" + host
-
+	notLoadCacheAtStartStr := cfg.GetString(NACOS_DISCOVERY_NotLoadCacheAtStart)
+	notLoadCacheAtStart := true
+	if len(notLoadCacheAtStartStr) > 0 && strings.EqualFold(notLoadCacheAtStartStr, "false") {
+		notLoadCacheAtStart = false
+	}
 	options := registry.Options{
 		ServerAddrs: strings.Split(addr, ","),
 		ClientOptions: registry.ClientOptions{
 			//NamespaceId: ns,
 			LogDir: dir,
 			//CacheDir:  dir,
-			TimeoutMs: 3000,
-			AppName:   serverName,
+			TimeoutMs:           3000,
+			AppName:             serverName,
+			NotLoadCacheAtStart: notLoadCacheAtStart,
 		},
 		RegistryOptions: registry.RegistryOptions{
 			ServiceName: serverName,

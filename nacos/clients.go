@@ -51,25 +51,27 @@ func createClientConfig(opts interface{}) constant.ClientConfig {
 	if ccfg, ok := opts.(config.ClientOptions); ok {
 		logger.Infof("[nacos] init config client:%v", ccfg)
 		clientConfig = constant.ClientConfig{
-			LogLevel:    "error",
-			TimeoutMs:   ccfg.TimeoutMs,
-			LogDir:      ccfg.LogDir,
-			CacheDir:    ccfg.CacheDir,
-			NamespaceId: ccfg.NamespaceId,
-			AppName:     ccfg.AppName,
-			ContextPath: ccfg.ContextPath,
+			LogLevel:            "error",
+			TimeoutMs:           ccfg.TimeoutMs,
+			LogDir:              ccfg.LogDir,
+			CacheDir:            ccfg.CacheDir,
+			NamespaceId:         ccfg.NamespaceId,
+			AppName:             ccfg.AppName,
+			ContextPath:         ccfg.ContextPath,
+			NotLoadCacheAtStart: ccfg.NotLoadCacheAtStart,
 		}
 	}
 	if rcfg, ok := opts.(registry.ClientOptions); ok {
 		logger.Infof("[nacos] init registry client:%v", rcfg)
 		clientConfig = constant.ClientConfig{
-			LogLevel:    "error",
-			TimeoutMs:   rcfg.TimeoutMs,
-			LogDir:      rcfg.LogDir,
-			CacheDir:    rcfg.CacheDir,
-			NamespaceId: rcfg.NamespaceId,
-			AppName:     rcfg.AppName,
-			ContextPath: rcfg.ContextPath,
+			LogLevel:            "error",
+			TimeoutMs:           rcfg.TimeoutMs,
+			LogDir:              rcfg.LogDir,
+			CacheDir:            rcfg.CacheDir,
+			NamespaceId:         rcfg.NamespaceId,
+			AppName:             rcfg.AppName,
+			ContextPath:         rcfg.ContextPath,
+			NotLoadCacheAtStart: rcfg.NotLoadCacheAtStart,
 		}
 	}
 	return clientConfig
@@ -79,6 +81,7 @@ func CreateConfigClient(opts config.Options) (config_client.IConfigClient, error
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
+	cc.NotLoadCacheAtStart = true
 	client, err := clients.CreateConfigClient(map[string]interface{}{
 		"serverConfigs": sc,
 		"clientConfig":  cc,
@@ -90,6 +93,7 @@ func CreateNamingClient(opts registry.Options) (naming_client.INamingClient, err
 	addrs := opts.ServerAddrs
 	sc := createServerConfig(addrs, opts.ClientOptions.ContextPath)
 	cc := createClientConfig(opts.ClientOptions)
+	cc.NotLoadCacheAtStart = true
 	client, err := clients.CreateNamingClient(map[string]interface{}{
 		"serverConfigs": sc,
 		"clientConfig":  cc,

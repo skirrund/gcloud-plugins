@@ -1,10 +1,12 @@
 package nacos_registry
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/registry"
+	"github.com/skirrund/gcloud/utils"
 )
 
 func TestRegistry(t *testing.T) {
@@ -12,8 +14,9 @@ func TestRegistry(t *testing.T) {
 	ops := registry.Options{
 		ServerAddrs: []string{N201},
 		ClientOptions: registry.ClientOptions{
-			AppName: "test",
-			LogDir:  "/Users/jerry.shi/logs/nacos/go",
+			AppName:             "test",
+			LogDir:              "/Users/jerry.shi/logs/nacos/go",
+			NotLoadCacheAtStart: true,
 		},
 		RegistryOptions: registry.RegistryOptions{
 			ServiceName: "test-local",
@@ -22,7 +25,10 @@ func TestRegistry(t *testing.T) {
 		},
 	}
 	reg := NewRegistry(ops)
-	reg.RegisterInstance()
 	i := reg.GetInstance("pbm-common-wechat-service")
+	i1, err := reg.SelectInstances("pbm-common-wechat-service")
+	str, _ := utils.MarshalToString(i1)
+	fmt.Println(str, err)
+	logger.Info(i1)
 	logger.Info(i)
 }
