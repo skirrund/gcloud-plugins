@@ -39,9 +39,13 @@ var CookieExpireDelete = time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UT
 func NewServer(options server.Options, routerProvider func(engine *fiber.App), middleware ...any) server.Server {
 	srv := &Server{}
 	srv.Options = options
+	bodySize := options.MaxRequestBodySize
+	if bodySize <= 0 {
+		bodySize = 100 * 1024 * 1024
+	}
 	cfg := fiber.Config{
 		Concurrency:  options.Concurrency,
-		BodyLimit:    100 * 1024 * 1024,
+		BodyLimit:    bodySize,
 		ReadTimeout:  5 * time.Minute,
 		WriteTimeout: 5 * time.Minute,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {

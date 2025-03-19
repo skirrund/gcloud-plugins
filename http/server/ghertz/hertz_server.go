@@ -41,7 +41,11 @@ func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz
 	srv := &Server{}
 	srv.Options = options
 	var opts []config.Option
-	opts = append(opts, server.WithMaxRequestBodySize(100*1024*1024))
+	bodySize := options.MaxRequestBodySize
+	if bodySize <= 0 {
+		bodySize = 100 * 1024 * 1024
+	}
+	opts = append(opts, server.WithMaxRequestBodySize(bodySize))
 	opts = append(opts, server.WithReadTimeout(5*time.Minute))
 	opts = append(opts, server.WithWriteTimeout(5*time.Minute))
 	opts = append(opts, server.WithHostPorts(options.Address))

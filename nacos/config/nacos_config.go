@@ -10,6 +10,7 @@ import (
 	"github.com/skirrund/gcloud/bootstrap/env"
 	commonConfig "github.com/skirrund/gcloud/config"
 	"github.com/skirrund/gcloud/logger"
+	"github.com/skirrund/gcloud/parser"
 
 	"github.com/skirrund/gcloud/server"
 
@@ -96,7 +97,7 @@ func CreateInstance(opts commonConfig.Options) (commonConfig.IConfig, error) {
 		logger.Panic("[nacos]config error:", err.Error())
 		return nc, err
 	}
-	config = viper.New()
+	config = parser.NewDefaultParser()
 	err = nc.Read()
 	if err != nil {
 		logger.Panic(err)
@@ -189,7 +190,7 @@ func (nc *nacosConfigCenter) MergeConfig(eventType server.EventName, eventInfo i
 }
 
 func (nc *nacosConfigCenter) SetBaseConfig(reader io.Reader, configType string) error {
-	baseCfg := viper.New()
+	baseCfg := parser.NewDefaultParser()
 	baseCfg.SetConfigName("base")
 	baseCfg.SetConfigType(configType)
 	err := baseCfg.ReadConfig(reader)
@@ -238,7 +239,7 @@ func newConfigWatcher(nc *nacosConfigCenter) error {
 		OnChange: func(namespace, group, dataId, data string) {
 			logger.Info("[nacos] config changed dataId:" + dataId + ",ns:" + namespace + ",group:" + group)
 			reader := strings.NewReader(data)
-			v := viper.New()
+			v := parser.NewDefaultParser()
 			v.SetConfigType(nc.opts.ConfigOptions.FileExtension)
 			err := v.ReadConfig(reader)
 			if err != nil {
