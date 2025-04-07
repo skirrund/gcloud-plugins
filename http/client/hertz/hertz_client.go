@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server/http/cookie"
+	"github.com/skirrund/gcloud/server/lb"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
 )
@@ -84,9 +84,13 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 			logger.Error("[lb-heartz-client] recover :", err)
 		}
 	}()
-	if req.Method != http.MethodGet && req.Method != http.MethodHead && params != nil {
-		bodyBytes, _ := io.ReadAll(params)
-		doRequest.SetBody(bodyBytes)
+	if req.Method != http.MethodGet && req.Method != http.MethodHead {
+		// bodyBytes, err := io.ReadAll(params)
+		// if err != nil {
+		// 	logger.Error("[lb-heartz-client] read params error:", err.Error(), ",", reqUrl, ",")
+		// 	return r, err
+		// }
+		doRequest.SetBody(params)
 		if isJson {
 			doRequest.SetHeader(ContentType, "application/json;charset=utf-8")
 		} else if req.HasFile {
@@ -178,6 +182,60 @@ func (hhc HertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, time
 	ctx.SetStatusCode(sc)
 	ctx.Response.SetBody(resp.Body())
 	return nil
+}
+
+func (hhc HertzHttpClient) ProxyService(serviceName, path string, ctx *app.RequestContext, timeout time.Duration) error {
+	logger.Info("[startProxy-hertz]:", serviceName, "[path:", path)
+	gRequest := &request.Request{
+		ServiceName: serviceName,
+		Path:        path,
+		Method:      string(ctx.Method()),
+		TimeOut:     timeout,
+	}
+	gRequest.Params = ctx.Request.Body()
+	ctxHeader := make(map[string]string)
+	ctx.VisitAllHeaders(func(key, value []byte) {
+		k := string(key)
+		ctxHeader[k] = string(value)
+	})
+	gRequest.Headers = ctxHeader
+	gRequest.LbOptions = request.NewDefaultLbOptions()
+	gresp, err := lb.GetInstance().Run(gRequest, nil)
+	if err != nil {
+		return err
+	}
+	if len(gresp.Headers) > 0 {
+		for k, v := range gresp.Headers {
+			if len(v) == 0 {
+				ctx.Response.Header.Set(k, v[0])
+			} else {
+				for _, vv := range v {
+					ctx.Response.Header.Add(k, vv)
+				}
+			}
+		}
+	}
+	// if len(gresp.Cookies) > 0 {
+	// 	for _, v := range gresp.Cookies {
+	// 		ctx.SetCookie(v.Key, v.Value, int(v.MaxAge), v.Path, v.Domain, getSameSiteHertz(v.SameSite), v.Secure, v.HttpOnly)
+	// 	}
+	// }
+	sc := gresp.StatusCode
+	ctx.SetStatusCode(sc)
+	ctx.Response.SetBody(gresp.Body)
+	return nil
+}
+
+func getSameSiteHertz(sameSite cookie.CookieSameSite) protocol.CookieSameSite {
+	switch sameSite {
+	case cookie.CookieSameSiteLaxMode:
+		return protocol.CookieSameSiteLaxMode
+	case cookie.CookieSameSiteStrictMode:
+		return protocol.CookieSameSiteStrictMode
+	case cookie.CookieSameSiteNoneMode:
+		return protocol.CookieSameSiteNoneMode
+	}
+	return protocol.CookieSameSiteDefaultMode
 }
 
 func getSameSite(sameSite protocol.CookieSameSite) (s cookie.CookieSameSite) {

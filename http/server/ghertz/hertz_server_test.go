@@ -3,15 +3,18 @@ package ghertz
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	hertzServer "github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/skirrund/gcloud-plugins/http/client/hertz"
 	nacos_registry "github.com/skirrund/gcloud-plugins/nacos/registry"
 	"github.com/skirrund/gcloud/bootstrap"
 	"github.com/skirrund/gcloud/registry"
 	"github.com/skirrund/gcloud/server"
-	"github.com/skirrund/gcloud/server/feign"
+	"github.com/skirrund/gcloud/server/http/cookie"
 )
 
 type Test struct {
@@ -30,8 +33,8 @@ func TestHertzServer(t *testing.T) {
 			NotLoadCacheAtStart: true,
 		},
 		RegistryOptions: registry.RegistryOptions{
-			ServiceName: "test-local",
-			ServicePort: 8899,
+			ServiceName: "hertz_test",
+			ServicePort: 8080,
 			Version:     "0.1",
 		},
 	}
@@ -40,18 +43,65 @@ func TestHertzServer(t *testing.T) {
 		ServerName: "hertz_test",
 		Address:    ":8080",
 	}
+	reg.RegisterInstance()
+
+	ops1 := registry.Options{
+		ServerAddrs: []string{N201},
+		ClientOptions: registry.ClientOptions{
+			AppName:             "test",
+			LogDir:              "/Users/jerry.shi/logs/nacos/go",
+			NotLoadCacheAtStart: true,
+		},
+		RegistryOptions: registry.RegistryOptions{
+			ServiceName: "hertz_test",
+			ServicePort: 8081,
+			Version:     "0.1",
+		},
+	}
+	reg1 := nacos_registry.NewRegistry(ops1)
+	reg1.RegisterInstance()
+	reg.Subscribe("hertz_test")
+	gApp := bootstrap.Application{
+		Registry: reg,
+	}
+	bootstrap.MthApplication = &gApp
+	// lb.GetInstance().SetHttpClient(hertz.GetDefaultClient())
 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
 		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
-			app := bootstrap.Application{
-				Registry: reg,
+			ctx.JSON(200, "Get")
+		})
+		engine.POST("/test", func(c context.Context, ctx *app.RequestContext) {
+			mfh, err := ctx.FormFile("file")
+			fmt.Println(err)
+			mf, err := mfh.Open()
+			fmt.Println(err)
+			defer mf.Close()
+			bytes, _ := io.ReadAll(mf)
+			os.WriteFile("/Users/jerry.shi/Desktop/"+mfh.Filename, bytes, os.ModePerm)
+			hn := ctx.Host()
+			ck := cookie.Cookie{
+				Key:      "test",
+				Value:    "testV=",
+				Domain:   string(hn),
+				Path:     "/",
+				MaxAge:   1000000,
+				Secure:   false,
+				HttpOnly: false,
+				SameSite: cookie.CookieSameSiteNoneMode,
 			}
-			bootstrap.MthApplication = &app
-			client := feign.Client{
-				ServiceName: "pbm-common-wechat-service",
+			SetCookie(ck, ctx)
+			ck1 := cookie.Cookie{
+				Key:      "test2",
+				Value:    "testV2==",
+				Domain:   string(hn),
+				Path:     "/",
+				MaxAge:   1000000,
+				Secure:   false,
+				HttpOnly: false,
+				SameSite: cookie.CookieSameSiteNoneMode,
 			}
-			client.Get("/test", nil, nil, nil)
-			//i1, err = reg.SelectInstances("pbm-common-wechat-service")
-			ctx.JSON(200, nil)
+			SetCookie(ck1, ctx)
+			ctx.JSON(200, "")
 		})
 		engine.GET("/del", func(c context.Context, ctx *app.RequestContext) {
 			ClearCookie(ctx, "", "", "test")
@@ -59,8 +109,62 @@ func TestHertzServer(t *testing.T) {
 			// SetCookie()
 			//ctx.JSON(http.StatusOK, s)
 		})
+		engine.Any("/test1", func(c context.Context, ctx *app.RequestContext) {
+			hertz.GetDefaultClient().ProxyService("hertz_test", "/test", ctx, 0)
+		})
 	})
 	srv.Run(func() {
 		fmt.Println("shut down")
 	})
 }
+
+// func TestHertzServer1(t *testing.T) {
+// 	N201 := "nacos1:8848"
+// 	ops := registry.Options{
+// 		ServerAddrs: []string{N201},
+// 		ClientOptions: registry.ClientOptions{
+// 			AppName:             "test",
+// 			LogDir:              "/Users/jerry.shi/logs/nacos/go",
+// 			NotLoadCacheAtStart: true,
+// 		},
+// 		RegistryOptions: registry.RegistryOptions{
+// 			ServiceName: "hertz_test",
+// 			ServicePort: 8081,
+// 			Version:     "0.1",
+// 		},
+// 	}
+// 	reg := nacos_registry.NewRegistry(ops)
+// 	options := server.Options{
+// 		ServerName: "hertz_test",
+// 		Address:    ":8081",
+// 	}
+// 	reg.RegisterInstance()
+// 	reg.Subscribe("hertz_test")
+// 	gApp := bootstrap.Application{
+// 		Registry: reg,
+// 	}
+// 	bootstrap.MthApplication = &gApp
+// 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
+// 		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
+// 			// client := feign.Client{
+// 			// 	ServiceName: "pbm-common-wechat-service",
+// 			// }
+// 			// client.Get("/test", nil, nil, nil)
+
+// 			is, _ := reg.SelectInstances("hertz_test")
+// 			ctx.JSON(200, is)
+// 		})
+// 		engine.GET("/del", func(c context.Context, ctx *app.RequestContext) {
+// 			ClearCookie(ctx, "", "", "test")
+// 			//t := &Test{}
+// 			// SetCookie()
+// 			//ctx.JSON(http.StatusOK, s)
+// 		})
+// 		engine.GET("/test1", func(c context.Context, ctx *app.RequestContext) {
+// 			hertz.GetDefaultClient().ProxyService("hertz_test", "/test", ctx, 0)
+// 		})
+// 	})
+// 	srv.Run(func() {
+// 		fmt.Println("shut down")
+// 	})
+// }

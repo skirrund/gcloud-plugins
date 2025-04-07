@@ -3,7 +3,6 @@ package fasthttp
 import (
 	"crypto/tls"
 	"errors"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server/http/cookie"
+	"github.com/skirrund/gcloud/server/lb"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
 	"github.com/valyala/fasthttp"
@@ -84,9 +84,9 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 			logger.Error("[lb-fasthttp]] recover :", err)
 		}
 	}()
-	if req.Method != http.MethodGet && req.Method != http.MethodHead && params != nil {
-		bodyBytes, _ := io.ReadAll(params)
-		doRequest.SetBody(bodyBytes)
+	if req.Method != http.MethodGet && req.Method != http.MethodHead {
+		// bodyBytes, _ := io.ReadAll(params)
+		doRequest.SetBody(params)
 		if isJson {
 			doRequest.Header.SetContentType("application/json;charset=utf-8")
 		} else if req.HasFile {
@@ -153,6 +153,7 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 		k := string(key)
 		val := string(value)
 		vals := r.Headers[k]
+		logger.Info("[lb-fasthttp] header:", k, "=", val)
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
@@ -205,6 +206,48 @@ func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Dur
 	return nil
 }
 
+func (fhc FastHttpClient) ProxyService(serviceName, path string, ctx *fiber.Ctx, timeout time.Duration) error {
+	logger.Info("[startProxy-fasthttp]:", serviceName, "[path:", path)
+	gRequest := &request.Request{
+		ServiceName: serviceName,
+		Path:        path,
+		Method:      ctx.Method(),
+		TimeOut:     timeout,
+	}
+	// r := bytes.NewReader(ctx.Body())
+	gRequest.Params = ctx.Body()
+	ctxHeader := make(map[string]string)
+	for k, v := range ctx.GetReqHeaders() {
+		length := len(v)
+		for i := range length {
+			ctxHeader[k] = v[i]
+		}
+	}
+	gRequest.Headers = ctxHeader
+	gRequest.LbOptions = request.NewDefaultLbOptions()
+	gresp, err := lb.GetInstance().Run(gRequest, nil)
+	if err != nil {
+		return err
+	}
+	fResp := ctx.Response()
+	if len(gresp.Headers) > 0 {
+		for k, v := range gresp.Headers {
+			if len(v) == 0 {
+				fResp.Header.Set(k, v[0])
+			} else {
+				for _, vv := range v {
+					fResp.Header.Add(k, vv)
+				}
+			}
+		}
+	}
+	sc := gresp.StatusCode
+	ctx.Context().SetContentType(gresp.ContentType)
+	ctx.Context().SetBody(gresp.Body)
+	ctx.Context().SetStatusCode(sc)
+	return nil
+}
+
 func getSameSite(sameSite fasthttp.CookieSameSite) (s cookie.CookieSameSite) {
 	switch sameSite {
 	case fasthttp.CookieSameSiteDefaultMode:
@@ -230,8 +273,12 @@ func setFasthttpHeader(req *fasthttp.Request, headers map[string]string) {
 
 func (FastHttpClient) CheckRetry(err error, status int) bool {
 	if err != nil {
-		if err == fasthttp.ErrDialTimeout {
+		if errors.Is(err, fasthttp.ErrDialTimeout) {
 			return true
+		}
+		err = errors.Unwrap(err)
+		if err == nil {
+			return false
 		}
 		ue, ok := err.(*url.Error)
 		logger.Info("[lb-fasthttp] checkRetry error *url.Error:", ok)

@@ -27,3 +27,4 @@ xxl-job-test
 xxl-job-test-go
 DEFAULT_GROUP@@pbm-common-wechat-service
 DEFAULT_GROUP@@pbm-common-wechat-service@@DEFAULT
+DEFAULT_GROUP@@hertz_test

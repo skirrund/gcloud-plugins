@@ -2,7 +2,6 @@ package gfiber
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +19,7 @@ import (
 	"github.com/skirrund/gcloud/response"
 	"github.com/skirrund/gcloud/server"
 	"github.com/skirrund/gcloud/server/http/cookie"
+	"github.com/skirrund/gcloud/utils"
 	"github.com/skirrund/gcloud/utils/validator"
 	"github.com/valyala/fasthttp"
 )
@@ -100,9 +100,10 @@ func getCfg() []any {
 			return false
 		},
 		EnableStackTrace: true,
-		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+		StackTraceHandler: func(c *fiber.Ctx, e any) {
 			logger.Error("[Fiber] recover:", e, "\n", string(debug.Stack()))
-			c.JSON(response.Fail[any](fmt.Sprintf("%v", e)))
+			str, _ := utils.MarshalToString(e)
+			c.JSON(response.Fail[any](str))
 		},
 	}
 	handlers = append(handlers, recover.New(recoverCfg), middleware.LoggingMiddleware)
@@ -339,7 +340,7 @@ func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
 }
 
 func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
-	if len(c.Key) > 0 {
+	if len(c.Key) <= 0 {
 		return
 	}
 	fCookie := &fiber.Cookie{
