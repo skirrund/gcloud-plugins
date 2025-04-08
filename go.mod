@@ -10,7 +10,7 @@ require (
 	github.com/cloudwego/hertz v0.9.6
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/nacos-group/nacos-sdk-go/v2 v2.2.8
-	github.com/skirrund/gcloud v0.12.0
+	github.com/skirrund/gcloud v0.12.1
 	github.com/spf13/viper v1.20.1
 	github.com/valyala/fasthttp v1.59.0
 )
