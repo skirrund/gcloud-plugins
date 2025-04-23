@@ -7,12 +7,12 @@ toolchain go1.24.1
 require (
 	github.com/apache/pulsar-client-go v0.14.0
 	github.com/bytedance/sonic v1.13.2
-	github.com/cloudwego/hertz v0.9.6
+	github.com/cloudwego/hertz v0.9.7
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/nacos-group/nacos-sdk-go/v2 v2.2.8
-	github.com/skirrund/gcloud v0.12.1
+	github.com/skirrund/gcloud v0.12.2
 	github.com/spf13/viper v1.20.1
-	github.com/valyala/fasthttp v1.59.0
+	github.com/valyala/fasthttp v1.61.0
 )
 
 require (
@@ -72,7 +72,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/strftime v1.1.0 // indirect
@@ -117,7 +117,7 @@ require (
 	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
