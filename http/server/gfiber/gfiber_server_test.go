@@ -99,7 +99,7 @@ func TestHertzServer(t *testing.T) {
 
 		})
 		engine.Get("/del", func(ctx *fiber.Ctx) error {
-			ClearCookie(ctx, "", "", "test")
+
 			//t := &Test{}
 			// SetCookie()
 			//ctx.JSON(http.StatusOK, s)

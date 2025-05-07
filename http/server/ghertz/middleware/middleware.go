@@ -47,7 +47,7 @@ func getLogBodyStr(bb []byte) string {
 	return string(bb)
 }
 
-func MyRecoveryHandler(c context.Context, ctx *app.RequestContext, err interface{}, stack []byte) {
+func MyRecoveryHandler(c context.Context, ctx *app.RequestContext, err any, stack []byte) {
 	logger.Error("[Hertz] recover:", err, "\n", string(stack))
 	ctx.Response.Reset()
 	ctx.JSON(200, response.Fail[any](fmt.Sprintf("%v", err)))

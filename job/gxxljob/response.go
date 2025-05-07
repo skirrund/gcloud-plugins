@@ -4,9 +4,9 @@ import "github.com/skirrund/gcloud/utils"
 
 // 接口响应结果
 type Resp struct {
-	Code    int64       `json:"code"` // 200 表示正常、其他失败
-	Msg     interface{} `json:"msg"`  // 错误提示消息
-	Content any         `json:"content"`
+	Code    int64 `json:"code"` // 200 表示正常、其他失败
+	Msg     any   `json:"msg"`  // 错误提示消息
+	Content any   `json:"content"`
 }
 
 type JobHandleResult struct {

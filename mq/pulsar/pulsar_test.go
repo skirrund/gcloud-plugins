@@ -3,6 +3,7 @@ package pulsar
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -39,4 +40,9 @@ func TestInitClient(t *testing.T) {
 
 	fmt.Println(err)
 	fmt.Println(bs)
+}
+
+var m sync.Map
+
+func Test123(t *testing.T) {
 }

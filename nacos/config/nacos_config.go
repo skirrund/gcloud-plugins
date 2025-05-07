@@ -109,11 +109,11 @@ func CreateInstance(opts commonConfig.Options) (commonConfig.IConfig, error) {
 	return nc, err
 }
 
-func (nc *nacosConfigCenter) Set(key string, value interface{}) {
+func (nc *nacosConfigCenter) Set(key string, value any) {
 	config.Set(key, value)
 }
 
-func (nc *nacosConfigCenter) Get(key string) interface{} {
+func (nc *nacosConfigCenter) Get(key string) any {
 	return config.Get(key)
 }
 
@@ -185,7 +185,7 @@ func (nc *nacosConfigCenter) GetStringMapString(key string) map[string]string {
 	return config.GetStringMapString(key)
 }
 
-func (nc *nacosConfigCenter) MergeConfig(eventType server.EventName, eventInfo interface{}) error {
+func (nc *nacosConfigCenter) MergeConfig(eventType server.EventName, eventInfo any) error {
 	return nil
 }
 
