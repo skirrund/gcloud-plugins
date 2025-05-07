@@ -127,7 +127,7 @@ func (pc *PulsarClient) Subscribes(opts ...mq.ConsumerOptions) {
 func (pc *PulsarClient) doSubscribe(opts mq.ConsumerOptions) error {
 	subscriptionName := opts.SubscriptionName
 	topic := opts.Topic
-	logger.Infof("[pulsar]ConsumerOptions:%v", opts)
+	logger.Infof("[pulsar]ConsumerOptions:%+v", opts)
 	options := pulsar.ConsumerOptions{
 		Topic:               topic,
 		SubscriptionName:    subscriptionName,
@@ -154,7 +154,7 @@ func (pc *PulsarClient) doSubscribe(opts mq.ConsumerOptions) error {
 	}
 	consumers.Store(topic+":"+subscriptionName, opts)
 
-	logger.Infof("[pulsar]store consumerOptions:"+topic+":"+subscriptionName, ",", opts)
+	logger.Infof("[pulsar]store consumerOptions:"+topic+":"+subscriptionName+",%+v", opts)
 
 	for cm := range channel {
 		go consume(cm, consumer, schema, opts)
@@ -195,7 +195,7 @@ func consume(cm pulsar.ConsumerMessage, consumer pulsar.Consumer, schema pulsar.
 				}
 				ACKMode = uint32(opt.ACKMode)
 			} else {
-				logger.Errorf("[pulsar] consumerOptions type error=> options:%v", copts)
+				logger.Errorf("[pulsar] consumerOptions type error=> options:%+v", copts)
 			}
 		} else {
 			logger.Error("[pulsar] can not find ConsumerOptions=>subName:" + opts.Topic + ":" + cm.Subscription())
