@@ -2,6 +2,7 @@ package nacos
 
 import (
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/skirrund/gcloud/config"
@@ -14,6 +15,11 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+)
+
+const (
+	SYSENV_NACOS_USERNAME = "NACOS_USERNAME"
+	SYSENV_NACOS_PASSWORD = "NACOS_PASSWORD"
 )
 
 func createServerConfig(addrs []string, contextPath string) []constant.ServerConfig {
@@ -61,6 +67,16 @@ func createClientConfig(opts any) constant.ClientConfig {
 			ContextPath:         ccfg.ContextPath,
 			NotLoadCacheAtStart: ccfg.NotLoadCacheAtStart,
 		}
+		username := ccfg.Username
+		password := ccfg.Password
+		if len(username) == 0 && len(password) == 0 {
+			username = os.Getenv(SYSENV_NACOS_USERNAME)
+			password = os.Getenv(SYSENV_NACOS_PASSWORD)
+		}
+		if len(username) > 0 && len(password) > 0 {
+			clientConfig.Username = username
+			clientConfig.Password = password
+		}
 	}
 	if rcfg, ok := opts.(registry.ClientOptions); ok {
 		logger.Infof("[nacos] init registry client:%v", rcfg)
@@ -73,6 +89,16 @@ func createClientConfig(opts any) constant.ClientConfig {
 			AppName:             rcfg.AppName,
 			ContextPath:         rcfg.ContextPath,
 			NotLoadCacheAtStart: rcfg.NotLoadCacheAtStart,
+		}
+		username := rcfg.Username
+		password := rcfg.Password
+		if len(username) == 0 && len(password) == 0 {
+			username = os.Getenv(SYSENV_NACOS_USERNAME)
+			password = os.Getenv(SYSENV_NACOS_PASSWORD)
+		}
+		if len(username) > 0 && len(password) > 0 {
+			clientConfig.Username = username
+			clientConfig.Password = password
 		}
 	}
 	return clientConfig

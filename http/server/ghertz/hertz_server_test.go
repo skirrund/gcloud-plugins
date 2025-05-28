@@ -3,8 +3,6 @@ package ghertz
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"testing"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -14,7 +12,6 @@ import (
 	"github.com/skirrund/gcloud/bootstrap"
 	"github.com/skirrund/gcloud/registry"
 	"github.com/skirrund/gcloud/server"
-	"github.com/skirrund/gcloud/server/http/cookie"
 )
 
 type Test struct {
@@ -33,34 +30,18 @@ func TestHertzServer(t *testing.T) {
 			NotLoadCacheAtStart: true,
 		},
 		RegistryOptions: registry.RegistryOptions{
-			ServiceName: "hertz_test",
-			ServicePort: 8080,
+			ServiceName: "nacos_reg_test",
+			ServicePort: 8081,
 			Version:     "0.1",
 		},
 	}
 	reg := nacos_registry.NewRegistry(ops)
 	options := server.Options{
-		ServerName: "hertz_test",
-		Address:    ":8080",
+		ServerName: "nacos_reg_test",
+		Address:    ":8081",
 	}
 	reg.RegisterInstance()
-
-	ops1 := registry.Options{
-		ServerAddrs: []string{N201},
-		ClientOptions: registry.ClientOptions{
-			AppName:             "test",
-			LogDir:              "/Users/jerry.shi/logs/nacos/go",
-			NotLoadCacheAtStart: true,
-		},
-		RegistryOptions: registry.RegistryOptions{
-			ServiceName: "hertz_test",
-			ServicePort: 8081,
-			Version:     "0.1",
-		},
-	}
-	reg1 := nacos_registry.NewRegistry(ops1)
-	reg1.RegisterInstance()
-	reg.Subscribe("hertz_test")
+	reg.Subscribe("nacos_reg_test")
 	gApp := bootstrap.Application{
 		Registry: reg,
 	}
@@ -71,37 +52,37 @@ func TestHertzServer(t *testing.T) {
 			ctx.JSON(200, "Get")
 		})
 		engine.POST("/test", func(c context.Context, ctx *app.RequestContext) {
-			mfh, err := ctx.FormFile("file")
-			fmt.Println(err)
-			mf, err := mfh.Open()
-			fmt.Println(err)
-			defer mf.Close()
-			bytes, _ := io.ReadAll(mf)
-			os.WriteFile("/Users/jerry.shi/Desktop/"+mfh.Filename, bytes, os.ModePerm)
-			hn := ctx.Host()
-			ck := cookie.Cookie{
-				Key:      "test",
-				Value:    "testV=",
-				Domain:   string(hn),
-				Path:     "/",
-				MaxAge:   1000000,
-				Secure:   false,
-				HttpOnly: false,
-				SameSite: cookie.CookieSameSiteNoneMode,
-			}
-			SetCookie(ck, ctx)
-			ck1 := cookie.Cookie{
-				Key:      "test2",
-				Value:    "testV2==",
-				Domain:   string(hn),
-				Path:     "/",
-				MaxAge:   1000000,
-				Secure:   false,
-				HttpOnly: false,
-				SameSite: cookie.CookieSameSiteNoneMode,
-			}
-			SetCookie(ck1, ctx)
-			ctx.JSON(200, "")
+			// mfh, err := ctx.FormFile("file")
+			// fmt.Println(err)
+			// mf, err := mfh.Open()
+			// fmt.Println(err)
+			// defer mf.Close()
+			// bytes, _ := io.ReadAll(mf)
+			// os.WriteFile("/Users/jerry.shi/Desktop/"+mfh.Filename, bytes, os.ModePerm)
+			// hn := ctx.Host()
+			// ck := cookie.Cookie{
+			// 	Key:      "test",
+			// 	Value:    "testV=",
+			// 	Domain:   string(hn),
+			// 	Path:     "/",
+			// 	MaxAge:   1000000,
+			// 	Secure:   false,
+			// 	HttpOnly: false,
+			// 	SameSite: cookie.CookieSameSiteNoneMode,
+			// }
+			// SetCookie(ck, ctx)
+			// ck1 := cookie.Cookie{
+			// 	Key:      "test2",
+			// 	Value:    "testV2==",
+			// 	Domain:   string(hn),
+			// 	Path:     "/",
+			// 	MaxAge:   1000000,
+			// 	Secure:   false,
+			// 	HttpOnly: false,
+			// 	SameSite: cookie.CookieSameSiteNoneMode,
+			// }
+			// SetCookie(ck1, ctx)
+			ctx.JSON(200, "ok-hertz")
 		})
 		engine.GET("/del", func(c context.Context, ctx *app.RequestContext) {
 			ClearCookie(ctx, "", "", "test")
@@ -110,7 +91,7 @@ func TestHertzServer(t *testing.T) {
 			//ctx.JSON(http.StatusOK, s)
 		})
 		engine.Any("/test1", func(c context.Context, ctx *app.RequestContext) {
-			hertz.GetDefaultClient().ProxyService("hertz_test", "/test", ctx, 0)
+			hertz.GetDefaultClient().ProxyService("nacos_reg_test", "/test", ctx, 0)
 		})
 	})
 	srv.Run(func() {

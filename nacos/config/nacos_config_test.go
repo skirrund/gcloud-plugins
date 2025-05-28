@@ -3,6 +3,7 @@ package nacos_config
 import (
 	bytes2 "bytes"
 	_ "embed"
+	"fmt"
 	"os"
 	"testing"
 
@@ -14,6 +15,8 @@ import (
 var baseConfig []byte
 
 func TestConfig(t *testing.T) {
+	un := os.Environ()
+	fmt.Println(un)
 	opts := commonCfg.Options{
 		ServerAddrs: []string{"nacos1:8848"},
 		ClientOptions: commonCfg.ClientOptions{
