@@ -10,7 +10,7 @@ require (
 	github.com/cloudwego/hertz v0.10.0
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.1
-	github.com/skirrund/gcloud v0.12.6
+	github.com/skirrund/gcloud v0.12.8
 	github.com/spf13/viper v1.20.1
 	github.com/valyala/fasthttp v1.62.0
 )
@@ -100,14 +100,14 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.8.0 // indirect
+	github.com/redis/go-redis/v9 v9.9.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
-	github.com/spf13/cast v1.8.0 // indirect
+	github.com/spf13/cast v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
