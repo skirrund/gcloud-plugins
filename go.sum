@@ -348,8 +348,8 @@ github.com/shoenig/go-m1cpu v0.1.6 h1:nxdKQNcEB6vzgA2E2bvzKIYRuNj7XNJ4S/aRSwKzFt
 github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg9SUEw2VQ=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
-github.com/skirrund/gcloud v0.12.8 h1:wTGzW7bOMB0fJm42sDrdgPG4uyVAMNX9EfaJRPXMmsE=
-github.com/skirrund/gcloud v0.12.8/go.mod h1:rg7l25ALCzP42KXq9KcFbEJQsf7NmbVODdQQYbeQ41Y=
+github.com/skirrund/gcloud v0.12.10 h1:Ryz74Cj7J3lJVgtEpTR5wkC1SlHAKQRo4zd1RP0522s=
+github.com/skirrund/gcloud v0.12.10/go.mod h1:rg7l25ALCzP42KXq9KcFbEJQsf7NmbVODdQQYbeQ41Y=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.1.0 h1:MkTeG1DMwsrdH7QtLXy5W+fUxWq+vmb6cLmyJ7aRtF0=
 github.com/smartystreets/assertions v1.1.0/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYlVhC/LOxJk7iOWnoo=

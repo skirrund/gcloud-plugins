@@ -143,8 +143,11 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
-	if sc != http.StatusOK && sc != http.StatusFound && sc != http.StatusMovedPermanently {
+	if sc != http.StatusOK {
 		logger.Error("[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
+		if req.IsProxy && sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
+			return r, nil
+		}
 		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
 	}
 	return r, nil
@@ -191,6 +194,7 @@ func (hhc HertzHttpClient) ProxyService(serviceName, path string, ctx *app.Reque
 		Path:        path,
 		Method:      string(ctx.Method()),
 		TimeOut:     timeout,
+		IsProxy:     true,
 	}
 	gRequest.Params = ctx.Request.Body()
 	ctxHeader := make(map[string]string)

@@ -157,8 +157,11 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
-	if sc != http.StatusOK && sc != http.StatusFound && sc != http.StatusMovedPermanently {
+	if sc != http.StatusOK && !req.IsProxy {
 		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
+		if req.IsProxy && sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
+			return r, nil
+		}
 		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
 	}
 	return r, nil
@@ -213,6 +216,7 @@ func (fhc FastHttpClient) ProxyService(serviceName, path string, ctx *fiber.Ctx,
 		Path:        path,
 		Method:      ctx.Method(),
 		TimeOut:     timeout,
+		IsProxy:     true,
 	}
 	// r := bytes.NewReader(ctx.Body())
 	gRequest.Params = ctx.Body()
