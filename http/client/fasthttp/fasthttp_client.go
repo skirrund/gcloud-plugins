@@ -157,7 +157,7 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
-	if sc != http.StatusOK {
+	if sc != http.StatusOK && sc != http.StatusFound && sc != http.StatusMovedPermanently {
 		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
 		return r, errors.New("fasthttp code error:" + strconv.FormatInt(int64(sc), 10))
 	}

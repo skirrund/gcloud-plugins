@@ -143,7 +143,7 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
-	if sc != http.StatusOK {
+	if sc != http.StatusOK && sc != http.StatusFound && sc != http.StatusMovedPermanently {
 		logger.Error("[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
 		return r, errors.New("heartz-client code error:" + strconv.FormatInt(int64(sc), 10))
 	}
