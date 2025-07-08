@@ -64,18 +64,20 @@ func LoggingMiddleware(ctx *fiber.Ctx) error {
 	bb := ctx.Response().Body()
 	respStatus := ctx.Response().StatusCode()
 	respBody := getLogBodyStr(bb)
+	respCt := string(ctx.Response().Header.ContentType())
 	workPool.Execute(func() {
-		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), start)
+		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, start)
 	})
 	return err
 }
 
-func requestEnd(uri, ct, method, reqBody, respBody, respStatus string, start time.Time) {
+func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt string, start time.Time) {
 	logger.Info("\n [Fiber] uri:", uri,
 		"\n [Fiber] content-type:", ct,
 		"\n [Fiber] method:", method,
 		"\n [Fiber] body:"+reqBody,
 		"\n [Fiber] status:"+respStatus,
+		"\n [Hertz] response-content-type:"+respCt,
 		"\n [Fiber] response:"+respBody,
 		"\n [Fiber] cost:"+strconv.FormatInt(time.Since(start).Milliseconds(), 10)+"ms")
 }

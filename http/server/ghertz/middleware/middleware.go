@@ -74,18 +74,20 @@ func LoggingMiddleware(c context.Context, ctx *app.RequestContext) {
 	rResp := ctx.GetResponse()
 	bb := rResp.Body()
 	respStatus := rResp.StatusCode()
+	respCt := string(rResp.Header.ContentType())
 	respBody := getLogBodyStr(bb)
 	workPool.Execute(func() {
-		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), start)
+		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, start)
 	})
 }
 
-func requestEnd(uri, ct, method, reqBody, respBody, respStatus string, start time.Time) {
+func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt string, start time.Time) {
 	logger.Info("\n [Hertz] uri:", uri,
 		"\n [Hertz] content-type:", ct,
 		"\n [Hertz] method:", method,
 		"\n [Hertz] body:"+reqBody,
 		"\n [Hertz] status:"+respStatus,
+		"\n [Hertz] response-content-type:"+respCt,
 		"\n [Hertz] response:"+respBody,
 		"\n [Hertz] cost:"+strconv.FormatInt(time.Since(start).Milliseconds(), 10)+"ms")
 }

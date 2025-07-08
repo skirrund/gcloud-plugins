@@ -8,9 +8,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	hertzServer "github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/skirrund/gcloud-plugins/http/client/hertz"
-	nacos_registry "github.com/skirrund/gcloud-plugins/nacos/registry"
-	"github.com/skirrund/gcloud/bootstrap"
-	"github.com/skirrund/gcloud/registry"
 	"github.com/skirrund/gcloud/server"
 )
 
@@ -21,31 +18,31 @@ type Test struct {
 }
 
 func TestHertzServer(t *testing.T) {
-	N201 := "nacos1:8848"
-	ops := registry.Options{
-		ServerAddrs: []string{N201},
-		ClientOptions: registry.ClientOptions{
-			AppName:             "test",
-			LogDir:              "/Users/jerry.shi/logs/nacos/go",
-			NotLoadCacheAtStart: true,
-		},
-		RegistryOptions: registry.RegistryOptions{
-			ServiceName: "nacos_reg_test",
-			ServicePort: 8081,
-			Version:     "0.1",
-		},
-	}
-	reg := nacos_registry.NewRegistry(ops)
+	// N201 := "nacos1:8848"
+	// ops := registry.Options{
+	// 	ServerAddrs: []string{N201},
+	// 	ClientOptions: registry.ClientOptions{
+	// 		AppName:             "test",
+	// 		LogDir:              "/Users/jerry.shi/logs/nacos/go",
+	// 		NotLoadCacheAtStart: true,
+	// 	},
+	// 	RegistryOptions: registry.RegistryOptions{
+	// 		ServiceName: "nacos_reg_test",
+	// 		ServicePort: 8081,
+	// 		Version:     "0.1",
+	// 	},
+	// }
+	// reg := nacos_registry.NewRegistry(ops)
 	options := server.Options{
 		ServerName: "nacos_reg_test",
 		Address:    ":8081",
 	}
-	reg.RegisterInstance()
-	reg.Subscribe("nacos_reg_test")
-	gApp := bootstrap.Application{
-		Registry: reg,
-	}
-	bootstrap.MthApplication = &gApp
+	// reg.RegisterInstance()
+	// reg.Subscribe("nacos_reg_test")
+	// gApp := bootstrap.Application{
+	// 	Registry: reg,
+	// }
+	// bootstrap.MthApplication = &gApp
 	// lb.GetInstance().SetHttpClient(hertz.GetDefaultClient())
 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
 		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
