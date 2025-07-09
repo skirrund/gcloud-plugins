@@ -8,6 +8,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	hertzServer "github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/skirrund/gcloud-plugins/http/client/hertz"
+	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server"
 )
 
@@ -35,7 +36,7 @@ func TestHertzServer(t *testing.T) {
 	// reg := nacos_registry.NewRegistry(ops)
 	options := server.Options{
 		ServerName: "nacos_reg_test",
-		Address:    ":8081",
+		Address:    ":8080",
 	}
 	// reg.RegisterInstance()
 	// reg.Subscribe("nacos_reg_test")
@@ -79,6 +80,8 @@ func TestHertzServer(t *testing.T) {
 			// 	SameSite: cookie.CookieSameSiteNoneMode,
 			// }
 			// SetCookie(ck1, ctx)
+			tc := GetTraceContext(ctx)
+			DemoTrace(tc)
 			ctx.JSON(200, "ok-hertz")
 		})
 		engine.GET("/del", func(c context.Context, ctx *app.RequestContext) {
@@ -94,6 +97,10 @@ func TestHertzServer(t *testing.T) {
 	srv.Run(func() {
 		fmt.Println("shut down")
 	})
+}
+
+func DemoTrace(ctx context.Context) {
+	logger.InfoContext(ctx, "trace...")
 }
 
 // func TestHertzServer1(t *testing.T) {

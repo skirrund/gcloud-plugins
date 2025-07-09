@@ -1,6 +1,7 @@
 package gfiber
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ import (
 	"github.com/skirrund/gcloud/response"
 	"github.com/skirrund/gcloud/server"
 	"github.com/skirrund/gcloud/server/http/cookie"
+	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils"
 	"github.com/skirrund/gcloud/utils/validator"
 	"github.com/valyala/fasthttp"
@@ -106,7 +108,7 @@ func getCfg() []any {
 			c.JSON(response.Fail[any](str))
 		},
 	}
-	handlers = append(handlers, recover.New(recoverCfg), middleware.LoggingMiddleware)
+	handlers = append(handlers, recover.New(recoverCfg), middleware.TraceMiddleware, middleware.LoggingMiddleware)
 	return handlers
 }
 
@@ -356,4 +358,12 @@ func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
 		fCookie.SameSite = string(c.SameSite)
 	}
 	ctx.Cookie(fCookie)
+}
+
+func GetTraceContext(ctx *fiber.Ctx) context.Context {
+	id := ctx.Request().UserValue(tracer.TraceIDKey)
+	if id != nil {
+		return tracer.NewContextFromTraceId(id.(string))
+	}
+	return context.Background()
 }

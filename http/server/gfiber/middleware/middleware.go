@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/skirrund/gcloud/logger"
+	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils/worker"
 )
 
@@ -65,14 +66,20 @@ func LoggingMiddleware(ctx *fiber.Ctx) error {
 	respStatus := ctx.Response().StatusCode()
 	respBody := getLogBodyStr(bb)
 	respCt := string(ctx.Response().Header.ContentType())
+	var traceId string
+	obj := ctx.Request().UserValue(tracer.TraceIDKey)
+	if obj != nil {
+		traceId = obj.(string)
+	}
 	workPool.Execute(func() {
-		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, start)
+		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, traceId, start)
 	})
 	return err
 }
 
-func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt string, start time.Time) {
+func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt, traceId string, start time.Time) {
 	logger.Info("\n [Fiber] uri:", uri,
+		"\n [Fiber] trace-id:", traceId,
 		"\n [Fiber] content-type:", ct,
 		"\n [Fiber] method:", method,
 		"\n [Fiber] body:"+reqBody,
@@ -80,4 +87,14 @@ func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt string, s
 		"\n [Hertz] response-content-type:"+respCt,
 		"\n [Fiber] response:"+respBody,
 		"\n [Fiber] cost:"+strconv.FormatInt(time.Since(start).Milliseconds(), 10)+"ms")
+}
+
+func TraceMiddleware(ctx *fiber.Ctx) error {
+	traceId := ctx.Get(tracer.TraceIDKey)
+	if len(traceId) == 0 {
+		traceId = tracer.GenerateId()
+	}
+	ctx.Request().SetUserValue(tracer.TraceIDKey, traceId)
+	ctx.Response().Header.Set(tracer.TraceIDKey, traceId)
+	return ctx.Next()
 }

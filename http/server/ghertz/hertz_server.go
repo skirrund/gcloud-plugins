@@ -21,6 +21,7 @@ import (
 	"github.com/skirrund/gcloud/response"
 	gServer "github.com/skirrund/gcloud/server"
 	"github.com/skirrund/gcloud/server/http/cookie"
+	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils/validator"
 )
 
@@ -54,7 +55,7 @@ func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz
 	}
 	s := server.New(opts...)
 	s.Name = options.ServerName
-	s.Use(middleware.LoggingMiddleware, recovery.Recovery(recovery.WithRecoveryHandler(middleware.MyRecoveryHandler)))
+	s.Use(middleware.TraceMiddleware, middleware.LoggingMiddleware, recovery.Recovery(recovery.WithRecoveryHandler(middleware.MyRecoveryHandler)))
 	if len(middlewares) > 0 {
 		s.Use(middlewares...)
 	}
@@ -306,4 +307,9 @@ func getSameSite(sameSite cookie.CookieSameSite) protocol.CookieSameSite {
 		return protocol.CookieSameSiteNoneMode
 	}
 	return protocol.CookieSameSiteDefaultMode
+}
+
+func GetTraceContext(ctx *app.RequestContext) context.Context {
+	id := string(ctx.GetHeader(tracer.TraceIDKey))
+	return tracer.NewContextFromTraceId(id)
 }

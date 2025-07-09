@@ -9,6 +9,7 @@ import (
 	"github.com/skirrund/gcloud-plugins/http/client/fasthttp"
 	nacos_registry "github.com/skirrund/gcloud-plugins/nacos/registry"
 	"github.com/skirrund/gcloud/bootstrap"
+	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/registry"
 	"github.com/skirrund/gcloud/server"
 )
@@ -76,6 +77,7 @@ func TestHertzServer(t *testing.T) {
 			// 	SameSite: cookie.CookieSameSiteNoneMode,
 			// }
 			// SetCookie(ck1, ctx)
+			logger.InfoContext(GetTraceContext(ctx), "tttt")
 			return ctx.JSON("ok-fiber")
 
 		})
