@@ -15,6 +15,7 @@ import (
 	"github.com/skirrund/gcloud/server/lb"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
+	"github.com/skirrund/gcloud/tracer"
 	"github.com/valyala/fasthttp"
 )
 
@@ -62,6 +63,12 @@ func (hhc FastHttpClient) getClient() *fasthttp.Client {
 }
 
 func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+	loggerCtx := req.Context
+	if loggerCtx == nil {
+		loggerCtx = tracer.NewTraceIDContext()
+	} else {
+		loggerCtx = tracer.WithTraceID(loggerCtx)
+	}
 	doRequest := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(doRequest)
 	response := fasthttp.AcquireResponse()
@@ -81,7 +88,7 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	doRequest.SetRequestURI(reqUrl)
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error("[lb-fasthttp]] recover :", err)
+			logger.ErrorContext(loggerCtx, "[lb-fasthttp]] recover :", err)
 		}
 	}()
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
@@ -103,14 +110,14 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	doRequest.SetTimeout(timeOut)
 	err = c.getClient().Do(doRequest, response)
 	if err != nil {
-		logger.Error("[lb-fasthttp] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
+		logger.ErrorContext(loggerCtx, "[lb-fasthttp] fasthttp.Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
 	}
 	sc := response.StatusCode()
 	r.StatusCode = sc
 	ct := string(response.Header.ContentType())
 	r.ContentType = ct
-	logger.Info("[lb-fasthttp] response statusCode:", sc, " content-type:", ct)
+	logger.InfoContext(loggerCtx, "[lb-fasthttp] response statusCode:", sc, " content-type:", ct)
 	var location string
 	if sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
 		location = string(response.Header.Peek("Location"))
@@ -153,12 +160,12 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 		k := string(key)
 		val := string(value)
 		vals := r.Headers[k]
-		logger.Info("[lb-fasthttp] header:", k, "=", val)
+		logger.InfoContext(loggerCtx, "[lb-fasthttp] header:", k, "=", val)
 		vals = append(vals, val)
 		r.Headers[k] = vals
 	})
 	if sc != http.StatusOK && !req.IsProxy {
-		logger.Error("[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
+		logger.ErrorContext(loggerCtx, "[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
 		if req.IsProxy && sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
 			return r, nil
 		}

@@ -19,6 +19,7 @@ import (
 	"github.com/skirrund/gcloud/server/lb"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
+	"github.com/skirrund/gcloud/tracer"
 )
 
 type HertzHttpClient struct {
@@ -62,6 +63,12 @@ func (hhc HertzHttpClient) getClient() *client.Client {
 }
 
 func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err error) {
+	loggerCtx := req.Context
+	if loggerCtx == nil {
+		loggerCtx = tracer.NewTraceIDContext()
+	} else {
+		loggerCtx = tracer.WithTraceID(loggerCtx)
+	}
 	doRequest := protocol.AcquireRequest()
 	defer protocol.ReleaseRequest(doRequest)
 	response := protocol.AcquireResponse()
@@ -81,7 +88,7 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	doRequest.SetRequestURI(reqUrl)
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error("[lb-heartz-client] recover :", err)
+			logger.Error(loggerCtx, "[lb-heartz-client] recover :", err)
 		}
 	}()
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
@@ -107,14 +114,14 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
 	err = hhc.getClient().Do(context.Background(), doRequest, response)
 	if err != nil {
-		logger.Error("[lb-heartz-client] Do error:", err.Error(), ",", reqUrl, ",")
+		logger.ErrorContext(loggerCtx, "[lb-heartz-client] Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
 	}
 	sc := response.StatusCode()
 	r.StatusCode = sc
 	ct := string(response.Header.ContentType())
 	r.ContentType = ct
-	logger.Info("[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
+	logger.InfoContext(loggerCtx, "[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
 	b := response.Body()
 	r.Body = b
 	ck := protocol.AcquireCookie()
@@ -144,7 +151,7 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		r.Headers[k] = vals
 	})
 	if sc != http.StatusOK {
-		logger.Error("[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
+		logger.ErrorContext(loggerCtx, "[lb-heartz-client] StatusCode error:", sc, "【", reqUrl, "】", string(b), "【", string(response.Header.PeekLocation()), "】")
 		if req.IsProxy && sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
 			return r, nil
 		}
