@@ -5,12 +5,12 @@ go 1.24.0
 toolchain go1.24.1
 
 require (
-	github.com/apache/pulsar-client-go v0.15.1
+	github.com/apache/pulsar-client-go v0.16.0
 	github.com/bytedance/sonic v1.14.0
 	github.com/cloudwego/hertz v0.10.1
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.1
-	github.com/skirrund/gcloud v0.12.19
+	github.com/skirrund/gcloud v0.12.20
 	github.com/spf13/viper v1.20.1
 	github.com/valyala/fasthttp v1.64.0
 )
@@ -100,7 +100,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.12.0 // indirect
+	github.com/redis/go-redis/v9 v9.12.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

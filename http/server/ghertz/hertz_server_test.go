@@ -47,7 +47,11 @@ func TestHertzServer(t *testing.T) {
 	// lb.GetInstance().SetHttpClient(hertz.GetDefaultClient())
 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
 		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
-			ctx.JSON(200, "Get")
+			//i, err := ctx.WriteString("")
+			var bytes []byte
+			ctx.Write(bytes)
+			// fmt.Println(i, err)
+			// ctx.JSON(200, "Get")
 		})
 		engine.POST("/test", func(c context.Context, ctx *app.RequestContext) {
 			// mfh, err := ctx.FormFile("file")
