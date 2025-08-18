@@ -9,7 +9,7 @@ require (
 	github.com/bytedance/sonic v1.14.0
 	github.com/cloudwego/hertz v0.10.1
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/nacos-group/nacos-sdk-go/v2 v2.3.1
+	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
 	github.com/skirrund/gcloud v0.12.20
 	github.com/spf13/viper v1.20.1
 	github.com/valyala/fasthttp v1.64.0
