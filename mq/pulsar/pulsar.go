@@ -9,9 +9,8 @@ import (
 
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/mq"
+	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils"
-
-	baseConsumer "github.com/skirrund/gcloud/mq/consumer"
 
 	"github.com/apache/pulsar-client-go/pulsar"
 )
@@ -33,8 +32,6 @@ const (
 	defaultConnectionTimeout = 5 * time.Second
 	defaultOperationTimeout  = 30 * time.Second
 )
-
-var consumers sync.Map
 
 const (
 	MAX_RETRY_TIMES = 50
@@ -93,35 +90,20 @@ func getAppName(appName string) string {
 	}
 }
 
-func (pc *PulsarClient) Send(topic string, msg string) error {
-	return pc.doSend(topic, msg, 0)
+func (pc *PulsarClient) Send(msg *mq.Message) error {
+	return pc.doSend(msg)
 }
 
-func (pc *PulsarClient) SendDelay(topic string, msg string, delay time.Duration) error {
-	return pc.doSend(topic, msg, delay)
-}
-func (pc *PulsarClient) SendDelayAt(topic string, msg string, delayAt time.Time) error {
-	return pc.doSendDelayAt(topic, msg, delayAt)
-}
-func (pc *PulsarClient) SendAsync(topic string, msg string) error {
-	return pc.doSendAsync(topic, msg, 0)
+func (pc *PulsarClient) SendAsync(msg *mq.Message) error {
+	return pc.doSendAsync(msg)
 }
 
-func (pc *PulsarClient) SendDelayAsync(topic string, msg string, delay time.Duration) error {
-	return pc.doSendAsync(topic, msg, delay)
-}
-func (pc *PulsarClient) SendDelayAtAsync(topic string, msg string, delayAt time.Time) error {
-	return pc.doSendDelayAtAsync(topic, msg, delayAt)
-}
-
-func (pc *PulsarClient) Subscribe(opts mq.ConsumerOptions) {
+func (pc *PulsarClient) Subscribe(opts mq.ConsumerOptions) error {
 	go pc.doSubscribe(opts)
+	return nil
 }
-
-func (pc *PulsarClient) Subscribes(opts ...mq.ConsumerOptions) {
-	for _, opt := range opts {
-		pc.Subscribe(opt)
-	}
+func (pc *PulsarClient) SubscribeSync(opts mq.ConsumerOptions) error {
+	return pc.doSubscribe(opts)
 }
 
 func (pc *PulsarClient) doSubscribe(opts mq.ConsumerOptions) error {
@@ -149,64 +131,55 @@ func (pc *PulsarClient) doSubscribe(opts mq.ConsumerOptions) error {
 	consumer, err := pc.client.Subscribe(options)
 	if err != nil {
 		logger.Error(errors.New("[pulsar] Subscribe error:" + err.Error()))
-		panic("[pulsar] Subscribe error:" + err.Error())
-		//return err
+		if opts.IsErrorPanic {
+			panic("[pulsar] Subscribe error:" + err.Error())
+		} else {
+			return err
+		}
 	}
-	consumers.Store(topic+":"+subscriptionName, opts)
-
 	logger.Infof("[pulsar]store consumerOptions:"+topic+":"+subscriptionName+",%+v", opts)
 
 	for cm := range channel {
-		go consume(cm, consumer, schema, opts)
+		go func(cm pulsar.ConsumerMessage, consumer pulsar.Consumer, schema pulsar.Schema, opts mq.ConsumerOptions) {
+			consume(cm, consumer, schema, opts)
+		}(cm, consumer, schema, opts)
 	}
 	return nil
 }
 func consume(cm pulsar.ConsumerMessage, consumer pulsar.Consumer, schema pulsar.Schema, opts mq.ConsumerOptions) {
+	logCtx := tracer.NewTraceIDContext()
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error("[pulsar] consumer panic recover :", err, "\n", string(debug.Stack()))
+			logger.ErrorContext(logCtx, "[pulsar] consumer panic recover :", err, "\n", string(debug.Stack()))
 		}
 	}()
 	msg := cm.Message
 	var msgStr string
-	logger.Infof("[pulsar] consumer info=>subName:%s,msgId:%v,reDeliveryCount:%d,publishTime:%v,producerName:%s", cm.Subscription(), msg.ID(), msg.RedeliveryCount(), msg.PublishTime(), msg.ProducerName())
+	logger.InfofContext(logCtx, "[pulsar] consumer info=>subName:%s,msgId:%v,reDeliveryCount:%d,publishTime:%v,producerName:%s", cm.Subscription(), msg.ID(), msg.RedeliveryCount(), msg.PublishTime(), msg.ProducerName())
 	err := schema.Decode(msg.Payload(), &msgStr)
 	if err != nil {
-		logger.Info("[pulsar] consumer msg:", err.Error())
+		logger.InfoContext(logCtx, "[pulsar] consumer msg:", err.Error())
 	} else {
-		logger.Info("[pulsar] consumer msg:", msgStr)
+		logger.InfoContext(logCtx, "[pulsar] consumer msg:", msgStr)
 	}
-	err = opts.MessageListener.OnMessage(baseConsumer.Message{
-		Value:           msgStr,
-		RedeliveryCount: msg.RedeliveryCount(),
+	err = opts.MessageListener(logCtx, &mq.Message{
+		Payload:         []byte(msgStr),
+		RedeliveryCount: uint64(msg.RedeliveryCount()),
+		SubOpts:         mq.SubOpts{Name: opts.SubscriptionName},
 	})
 	if err == nil {
 		consumer.Ack(msg)
 	} else {
-		logger.Error("[pulsar] consumer error:" + err.Error())
-		copts, ok := consumers.Load(opts.Topic + ":" + cm.Subscription())
-		retryTimes := uint32(0)
-		ACKMode := uint32(0)
-		if ok {
-			if opt, o := copts.(mq.ConsumerOptions); o {
-				retryTimes = opt.RetryTimes
-				if retryTimes > MAX_RETRY_TIMES {
-					retryTimes = MAX_RETRY_TIMES
-				}
-				ACKMode = uint32(opt.ACKMode)
-			} else {
-				logger.Errorf("[pulsar] consumerOptions type error=> options:%+v", copts)
-			}
-		} else {
-			logger.Error("[pulsar] can not find ConsumerOptions=>subName:" + opts.Topic + ":" + cm.Subscription())
-		}
-
-		rt := msg.RedeliveryCount()
+		logger.ErrorContext(logCtx, "[pulsar] consumer error:"+err.Error())
+		retryTimes := uint64(0)
+		retryTimes = min(opts.RetryTimes, MAX_RETRY_TIMES)
+		ACKMode := uint32(opts.ACKMode)
+		rt := uint64(msg.RedeliveryCount())
 		if ACKMode == 1 && rt < retryTimes {
-			logger.Infof("[pulsar]consummer error and retry=> subscriptionName:"+cm.Subscription()+",initRetryTimes:%d,retryTimes:%d,ack:%d", retryTimes, rt, ACKMode)
+			logger.InfofContext(logCtx, "[pulsar]consummer error and retry=> subscriptionName:"+cm.Subscription()+",initRetryTimes:%d,retryTimes:%d,ack:%d", retryTimes, rt, ACKMode)
 			consumer.Nack(msg)
 		} else {
-			logger.Infof("[pulsar]consummer error and can not retry=> subscriptionName:"+cm.Subscription()+",initRetryTimes:%d,retryTimes:%d,ack:%d", retryTimes, rt, ACKMode)
+			logger.InfofContext(logCtx, "[pulsar]consummer error and can not retry=> subscriptionName:"+cm.Subscription()+",initRetryTimes:%d,retryTimes:%d,ack:%d", retryTimes, rt, ACKMode)
 			consumer.Ack(msg)
 		}
 

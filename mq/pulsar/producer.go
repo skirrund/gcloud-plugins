@@ -5,9 +5,10 @@ import (
 	"errors"
 
 	//	"sync"
-	"time"
 
 	"github.com/skirrund/gcloud/logger"
+	"github.com/skirrund/gcloud/mq"
+	"github.com/skirrund/gcloud/tracer"
 
 	"github.com/apache/pulsar-client-go/pulsar"
 )
@@ -51,35 +52,33 @@ func createProducer(topic string) (pulsar.Producer, error) {
 	return producer, err
 }
 
-func createMsg(msg string, deliverAfter time.Duration) *pulsar.ProducerMessage {
+func createMsg(msg *mq.Message) *pulsar.ProducerMessage {
 	message := &pulsar.ProducerMessage{
-		//Payload:      msg,
-		Value:        msg,
-		DeliverAfter: deliverAfter,
+		Value: string(msg.Payload),
+	}
+	if msg.DeliverAfter > 0 {
+		message.DeliverAfter = msg.DeliverAfter
+	}
+	if !msg.DeliverAt.IsZero() {
+		message.DeliverAt = msg.DeliverAt
 	}
 	return message
 }
-func createMsgDeliverAt(msg string, deliverAt time.Time) *pulsar.ProducerMessage {
-	message := &pulsar.ProducerMessage{
-		Value:     msg,
-		DeliverAt: deliverAt,
-	}
-	return message
-}
-
-func (pc *PulsarClient) doSend(topic string, msg string, deliverAfter time.Duration) error {
+func (pc *PulsarClient) doSend(msg *mq.Message) error {
+	topic := msg.Topic
 	if len(topic) == 0 {
 		return errors.New("[pulsar] topic is empty")
 	}
-	logger.Info("[pulsar] send msg =>topic:" + topic + ":" + string(msg))
-	message := createMsg(msg, deliverAfter)
+	logCtx := tracer.NewTraceIDContext()
+	logger.InfoContext(logCtx, "[pulsar] send msg =>topic:"+topic+":"+string(msg.Payload))
+	message := createMsg(msg)
 	producer, err := pc.getProducer(topic)
 	if err != nil {
 		return err
 	}
 	msgId, err := producer.Send(context.Background(), message)
 	if err != nil {
-		logger.Error("[pulsar]发送消息失败: ", err)
+		logger.InfoContext(logCtx, "[pulsar]发送消息失败: ", err)
 		return err
 	}
 	if msgId == nil {
@@ -88,14 +87,15 @@ func (pc *PulsarClient) doSend(topic string, msg string, deliverAfter time.Durat
 	return nil
 }
 
-func (pc *PulsarClient) doSendAsync(topic string, msg string, deliverAfter time.Duration) error {
+func (pc *PulsarClient) doSendAsync(msg *mq.Message) error {
 	var err error
+	topic := msg.Topic
 	if len(topic) == 0 {
 		err = errors.New("[pulsar] topic is empty")
 		logger.Error(err.Error())
 		return err
 	}
-	message := createMsg(msg, deliverAfter)
+	message := createMsg(msg)
 	p, err := pc.getProducer(topic)
 	if err != nil {
 		return err
@@ -105,45 +105,6 @@ func (pc *PulsarClient) doSendAsync(topic string, msg string, deliverAfter time.
 			logger.Error("[pulsar]发送doSendAsync消息失败:", err)
 		} else {
 			logger.Info("[pulsar] doSendAsync finish:", msgId)
-		}
-	})
-	return nil
-}
-
-func (pc *PulsarClient) doSendDelayAt(topic string, msg string, deliverAt time.Time) error {
-	if len(topic) == 0 {
-		return errors.New("[pulsar] topic is empty")
-	}
-	message := createMsgDeliverAt(msg, deliverAt)
-	p, err := pc.getProducer(topic)
-	if err != nil {
-		return err
-	}
-	msgId, err := p.Send(context.Background(), message)
-	if err != nil {
-		return err
-	}
-	if msgId == nil {
-		return errors.New("[pulsar]发送消息失败[messageId为空]:" + topic)
-	}
-	logger.Info("[pulsar] doSendDelayAt finish: ", msg)
-	return nil
-}
-
-func (pc *PulsarClient) doSendDelayAtAsync(topic string, msg string, deliverAt time.Time) error {
-	if len(topic) == 0 {
-		return errors.New("[pulsar] topic is not empty")
-	}
-	message := createMsgDeliverAt(msg, deliverAt)
-	p, err := pc.getProducer(topic)
-	if err != nil {
-		return err
-	}
-	p.SendAsync(context.Background(), message, func(msgId pulsar.MessageID, msg *pulsar.ProducerMessage, err error) {
-		if err != nil {
-			logger.Error("[pulsar]发送doSendDelayAtAsync消息失败:", err)
-		} else {
-			logger.Info("[pulsar] doSendDelayAtAsync finish:", msg.Value)
 		}
 	})
 	return nil

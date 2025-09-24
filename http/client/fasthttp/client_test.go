@@ -11,6 +11,7 @@ import (
 func TestXxx(t *testing.T) {
 	var r []byte
 	lb.GetInstance().SetHttpClient(defaultClient)
-	resp, err := http.PostJSONUrl("http://127.0.0.1:8080/test", nil, nil, &r)
+
+	resp, err := http.DefaultClient.PostJSONUrl("http://127.0.0.1:8080/test", nil, nil, &r)
 	fmt.Println(resp, err)
 }
