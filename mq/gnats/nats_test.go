@@ -41,6 +41,8 @@ func TestDemo1(t *testing.T) {
 		// fmt.Println(uuid)
 		//data := map[string]any{"k1": strconv.Itoa(i), "v1": strconv.Itoa(i), "time": time.Now().Format(time.DateTime)}
 		str := `{"applyNo":"APL1971041434174242816-test-test","fileName":"","channel":"jzq"}-` + strconv.Itoa(i)
+		str += str
+		str += str
 		msg := &mq.Message{
 			Topic:   subject,
 			Payload: []byte(str),
