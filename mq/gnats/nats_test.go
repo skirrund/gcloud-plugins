@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/skirrund/gcloud/mq"
 )
 
@@ -29,31 +29,32 @@ func TestDemo1(t *testing.T) {
 	//subject := "public/common-base/wx"
 	// subject = "test-3-push"
 
-	subject := "test-1-2"
-	//var wg sync.WaitGroup
-	for i := 0; i != 10; i++ {
-		// subject := "test-schedule.schedules." + utils.Uuid()
-		header := map[string]string{}
+	subject := "test-1-s"
+	var wg sync.WaitGroup
+	for i := 0; i != 100000; i++ {
+		//subject := "test-schedule.schedules." + utils.Uuid()
+		// header := map[string]string{}
 		// header["Nats-Schedule-Target"] = "test-schedule-test-1"
 		// header["Nats-Schedule"] = "@at " + time.Now().Add(3*time.Second).Format(time.RFC3339)
 		// uuid := utils.Uuid()
 		// header["Nats-Msg-Id"] = uuid
 		// fmt.Println(uuid)
-		data := map[string]any{"k1": strconv.Itoa(i), "v1": strconv.Itoa(i), "time": time.Now().Format(time.DateTime)}
-		str, _ := sonic.MarshalString(data)
+		//data := map[string]any{"k1": strconv.Itoa(i), "v1": strconv.Itoa(i), "time": time.Now().Format(time.DateTime)}
+		str := `{"applyNo":"APL1971041434174242816-test-test","fileName":"","channel":"jzq"}-` + strconv.Itoa(i)
 		msg := &mq.Message{
 			Topic:   subject,
 			Payload: []byte(str),
-			Header:  header,
-			//	NatsOpts: mq.NatsOpts{Stream: "test-schedule"},
+			//Header:  header,
+			NatsOpts: mq.NatsOpts{Stream: "test-schedule"},
 			//DeliverAfter: 10 * time.Second,
 		}
-		// wg.Go(func() {
-		err = conn.Send(msg)
-		fmt.Println(err)
-		// })
+		wg.Go(func() {
+			err = conn.Send(msg)
+			fmt.Println(time.Now().String())
+			fmt.Println(err)
+		})
 	}
-	//	wg.Wait()
+	wg.Wait()
 
 }
 
@@ -73,12 +74,12 @@ func TestConsumer(t *testing.T) {
 		panic(err)
 	}
 	subject := "public-common-base-wx"
-	subject = "test-1-2"
+	subject = "test-1-s"
 	// conn.Subscribe(mq.ConsumerOptions{
 	// 	Topic:            subject,
-	// 	SubscriptionName: "test-schedule-test-1",
+	// 	SubscriptionName: "test-1",
 	// 	MessageListener:  OnMessage,
-	// 	NatsOpts:         mq.NatsOpts{Stream: "test-schedule", PullBatchSize: 1},
+	// 	NatsOpts:         mq.NatsOpts{Stream: "test-schedule", PullBatchSize: 50},
 	// 	IsErrorPanic:     true,
 	// 	ACKMode:          mq.ACK_MANUAL,
 	// })
@@ -86,9 +87,9 @@ func TestConsumer(t *testing.T) {
 		Topic:            subject,
 		SubscriptionName: "test-1",
 		MessageListener:  OnMessage1,
-		//NatsOpts:         mq.NatsOpts{Stream: "test-schedule"},
-		IsErrorPanic: true,
-		ACKMode:      mq.ACK_MANUAL,
+		NatsOpts:         mq.NatsOpts{Stream: "test-schedule", PullBatchSize: 50},
+		IsErrorPanic:     true,
+		ACKMode:          mq.ACK_MANUAL,
 	})
 }
 

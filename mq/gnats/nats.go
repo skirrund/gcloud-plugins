@@ -2,6 +2,7 @@ package gnats
 
 import (
 	"errors"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -215,6 +216,10 @@ func (nc *natsConn) doSubscribe(opts mq.ConsumerOptions) error {
 		}
 		//pull
 		if len(cfg.DeliverGroup) == 0 {
+			numcpu := min(runtime.NumCPU(), 4)
+			for range numcpu - 1 {
+				go nc.pullSubscribe(opts, info.Config)
+			}
 			return nc.pullSubscribe(opts, info.Config)
 		} else {
 			return nc.pushSubscribe(opts, info.Config)
@@ -257,11 +262,12 @@ func (nc *natsConn) pullSubscribe(opts mq.ConsumerOptions, cfg nats.ConsumerConf
 		doPanic(opts.IsErrorPanic, err)
 		return err
 	}
-	pullWorker := worker.Init(opts.NatsOpts.PullBatchSize * 10)
+	pullBatchSize := opts.NatsOpts.PullBatchSize
+	execWorker := worker.Init(pullBatchSize * 2)
 	for {
-		batch, _ := sub.FetchBatch(opts.NatsOpts.PullBatchSize)
+		batch, _ := sub.FetchBatch(pullBatchSize)
 		for msg := range batch.Messages() {
-			pullWorker.Execute(func() {
+			execWorker.Execute(func() {
 				consume(msg, opts)
 			})
 		}
