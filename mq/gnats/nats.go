@@ -23,7 +23,7 @@ const (
 	PWD_KEY               = "nats.password"
 	ServerName            = "server.name"
 	MAX_RETRY_TIMES       = 50
-	DefaultPullBatchSize  = 50
+	DefaultPullBatchSize  = 34
 	DefaultStreamPrefix   = "public"
 	NatsScheduleTarget    = "Nats-Schedule-Target"
 	NatsSchedule          = "Nats-Schedule"

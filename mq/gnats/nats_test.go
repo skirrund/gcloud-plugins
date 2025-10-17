@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/skirrund/gcloud/mq"
+	"github.com/skirrund/gcloud/utils"
 )
 
 func TestDemo1(t *testing.T) {
@@ -31,13 +32,13 @@ func TestDemo1(t *testing.T) {
 
 	subject := "test-1-s"
 	var wg sync.WaitGroup
-	for i := 0; i != 100000; i++ {
+	for i := 0; i != 100; i++ {
 		//subject := "test-schedule.schedules." + utils.Uuid()
-		// header := map[string]string{}
-		// header["Nats-Schedule-Target"] = "test-schedule-test-1"
-		// header["Nats-Schedule"] = "@at " + time.Now().Add(3*time.Second).Format(time.RFC3339)
-		// uuid := utils.Uuid()
-		// header["Nats-Msg-Id"] = uuid
+		header := map[string]string{}
+		header["Nats-Schedule-Target"] = subject
+		header["Nats-Schedule"] = "@at " + time.Now().Add(3*time.Second).Format(time.RFC3339)
+		uuid := utils.Uuid()
+		header["Nats-Msg-Id"] = uuid
 		// fmt.Println(uuid)
 		//data := map[string]any{"k1": strconv.Itoa(i), "v1": strconv.Itoa(i), "time": time.Now().Format(time.DateTime)}
 		str := `{"applyNo":"APL1971041434174242816-test-test","fileName":"","channel":"jzq"}-` + strconv.Itoa(i)
@@ -46,7 +47,7 @@ func TestDemo1(t *testing.T) {
 		msg := &mq.Message{
 			Topic:   subject,
 			Payload: []byte(str),
-			//Header:  header,
+			//Header:   header,
 			NatsOpts: mq.NatsOpts{Stream: "test-schedule"},
 			//DeliverAfter: 10 * time.Second,
 		}
