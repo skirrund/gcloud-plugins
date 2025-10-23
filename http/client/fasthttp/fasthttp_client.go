@@ -46,7 +46,7 @@ func init() {
 		Dial: func(addr string) (net.Conn, error) {
 			return fasthttp.DialTimeout(addr, 3*time.Second)
 		},
-		MaxConnsPerHost:     2000,
+		MaxConnsPerHost:     2048,
 		MaxIdleConnDuration: DefaultTimeout,
 		MaxConnDuration:     DefaultTimeout,
 		ReadTimeout:         5 * time.Minute,
