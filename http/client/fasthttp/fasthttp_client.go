@@ -20,7 +20,8 @@ import (
 )
 
 type FastHttpClient struct {
-	client *fasthttp.Client
+	client    *fasthttp.Client
+	h2cClient *fasthttp.Client
 }
 
 var defaultClient FastHttpClient
@@ -45,6 +46,18 @@ func init() {
 		TLSConfig: &tls.Config{InsecureSkipVerify: true},
 		Dial: func(addr string) (net.Conn, error) {
 			return fasthttp.DialTimeout(addr, 3*time.Second)
+		},
+		MaxConnsPerHost:     2048,
+		MaxIdleConnDuration: DefaultTimeout,
+		MaxConnDuration:     DefaultTimeout,
+		ReadTimeout:         5 * time.Minute,
+		WriteTimeout:        5 * time.Minute,
+		MaxConnWaitTimeout:  5 * time.Second,
+	}
+	defaultClient.h2cClient = &fasthttp.Client{
+		TLSConfig: &tls.Config{InsecureSkipVerify: true},
+		Dial: func(addr string) (net.Conn, error) {
+			return fasthttp.DialTimeout(addr, 1*time.Second)
 		},
 		MaxConnsPerHost:     2048,
 		MaxIdleConnDuration: DefaultTimeout,

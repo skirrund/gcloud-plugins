@@ -14,6 +14,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/client"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
+	h2Config "github.com/hertz-contrib/http2/config"
+	"github.com/hertz-contrib/http2/factory"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/server/lb"
@@ -23,7 +25,8 @@ import (
 )
 
 type HertzHttpClient struct {
-	client *client.Client
+	client    *client.Client
+	h2cClient *client.Client
 }
 
 var defaultHttpClient HertzHttpClient
@@ -53,6 +56,13 @@ func init() {
 		client.WithClientReadTimeout(RequestTimeOut),
 		client.WithWriteTimeout(WriteTimeout),
 	)
+	defaultHttpClient.h2cClient, _ = client.NewClient(
+		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+		client.WithMaxIdleConnDuration(DefaultTimeout),
+		client.WithClientReadTimeout(RequestTimeOut),
+		client.WithWriteTimeout(WriteTimeout),
+	)
+	defaultHttpClient.h2cClient.SetClientFactory(factory.NewClientFactory(h2Config.WithAllowHTTP(true), h2Config.WithDialTimeout(1*time.Second)))
 }
 
 func (hhc HertzHttpClient) getClient() *client.Client {
@@ -112,7 +122,11 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		timeOut = DefaultTimeout
 	}
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
-	err = hhc.getClient().Do(context.Background(), doRequest, response)
+	client := hhc.getClient()
+	if req.H2C {
+		client = defaultHttpClient.h2cClient
+	}
+	err = client.Do(context.Background(), doRequest, response)
 	if err != nil {
 		logger.ErrorContext(loggerCtx, "[lb-heartz-client] Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err
@@ -121,7 +135,8 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	r.StatusCode = sc
 	ct := string(response.Header.ContentType())
 	r.ContentType = ct
-	logger.InfoContext(loggerCtx, "[lb-heartz-client] response statusCode:", sc, " content-type:", ct)
+	proto := response.Header.GetProtocol()
+	logger.InfoContext(loggerCtx, "[lb-heartz-client] response statusCode:", sc, " content-type:", ct, " proto:", proto)
 	b := response.Body()
 	r.Body = b
 	ck := protocol.AcquireCookie()
@@ -160,39 +175,39 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 	return r, nil
 }
 
-func (hhc HertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, timeout time.Duration) error {
-	logger.Info("[startProxy-hertz]:", targetUrl)
-	creq := protocol.AcquireRequest()
-	defer protocol.ReleaseRequest(creq)
-	var err error
-	method := string(ctx.Method())
-	creq.Header.SetMethod(method)
-	if method != http.MethodGet && method != http.MethodHead {
-		creq.SetBody(ctx.Request.Body())
-	}
-	ctx.VisitAllHeaders(func(key, value []byte) {
-		creq.Header.SetBytesKV(key, value)
-	})
-	creq.Header.SetContentTypeBytes(ctx.ContentType())
-	creq.SetRequestURI(targetUrl)
-	resp := protocol.AcquireResponse()
-	defer protocol.ReleaseResponse(resp)
-	if timeout <= 0 {
-		timeout = RequestTimeOut
-	}
-	creq.SetOptions(config.WithRequestTimeout(timeout))
-	err = hhc.getClient().Do(context.Background(), creq, resp)
-	if err != nil {
-		return err
-	}
-	resp.Header.VisitAll(func(key, value []byte) {
-		ctx.Response.Header.SetBytesV(string(key), value)
-	})
-	sc := resp.StatusCode()
-	ctx.SetStatusCode(sc)
-	ctx.Response.SetBody(resp.Body())
-	return nil
-}
+// func (hhc HertzHttpClient) Proxy(targetUrl string, ctx *app.RequestContext, timeout time.Duration) error {
+// 	logger.Info("[startProxy-hertz]:", targetUrl)
+// 	creq := protocol.AcquireRequest()
+// 	defer protocol.ReleaseRequest(creq)
+// 	var err error
+// 	method := string(ctx.Method())
+// 	creq.Header.SetMethod(method)
+// 	if method != http.MethodGet && method != http.MethodHead {
+// 		creq.SetBody(ctx.Request.Body())
+// 	}
+// 	ctx.VisitAllHeaders(func(key, value []byte) {
+// 		creq.Header.SetBytesKV(key, value)
+// 	})
+// 	creq.Header.SetContentTypeBytes(ctx.ContentType())
+// 	creq.SetRequestURI(targetUrl)
+// 	resp := protocol.AcquireResponse()
+// 	defer protocol.ReleaseResponse(resp)
+// 	if timeout <= 0 {
+// 		timeout = RequestTimeOut
+// 	}
+// 	creq.SetOptions(config.WithRequestTimeout(timeout))
+// 	err = hhc.getClient().Do(context.Background(), creq, resp)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	resp.Header.VisitAll(func(key, value []byte) {
+// 		ctx.Response.Header.SetBytesV(string(key), value)
+// 	})
+// 	sc := resp.StatusCode()
+// 	ctx.SetStatusCode(sc)
+// 	ctx.Response.SetBody(resp.Body())
+// 	return nil
+// }
 
 func (hhc HertzHttpClient) ProxyService(serviceName, path string, ctx *app.RequestContext, timeout time.Duration) error {
 	logger.Info("[startProxy-hertz]:", serviceName, "[path:", path)

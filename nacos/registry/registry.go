@@ -100,6 +100,13 @@ func configure(n *nacosRegistry, opts registry.Options) error {
 
 func (nr *nacosRegistry) RegisterInstance() error {
 	opts := nr.opts.RegistryOptions
+	medata := map[string]string{"version": opts.Version, "preserved.register.source": "http/go-" + runtime.Version()}
+	h2c := env.GetInstance().GetBool(env.SERVER_H2C_KEY)
+	if h2c {
+		medata["h2c"] = "true"
+	} else {
+		medata["h2c"] = "false"
+	}
 	registryParam := vo.RegisterInstanceParam{
 		Ip:          util.LocalIP(),
 		Port:        opts.ServicePort,
@@ -108,11 +115,11 @@ func (nr *nacosRegistry) RegisterInstance() error {
 		Enable:      true,
 		Healthy:     true,
 		Ephemeral:   true,
-		Metadata:    map[string]string{"version": opts.Version, "preserved.register.source": "http/go-" + runtime.Version()},
+		Metadata:    medata,
 		//ClusterName: "cluster-a", // default value is DEFAULT
 		GroupName: opts.Group, // default value is DEFAULT_GROUP
 	}
-	logger.Info("[nacos]  RegisterInstance:", registryParam)
+	logger.Infof("[nacos]  RegisterInstance:%+v", registryParam)
 	_, err := nr.client.RegisterInstance(registryParam)
 	if err != nil {
 		logger.Error("[nacos]  RegisterInstance error:", err.Error())

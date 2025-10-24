@@ -16,6 +16,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
+	h2Config "github.com/hertz-contrib/http2/config"
+	h2Factory "github.com/hertz-contrib/http2/factory"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
@@ -46,14 +48,17 @@ func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz
 	if bodySize <= 0 {
 		bodySize = 100 * 1024 * 1024
 	}
-	opts = append(opts, server.WithMaxRequestBodySize(bodySize))
-	opts = append(opts, server.WithReadTimeout(5*time.Minute))
-	opts = append(opts, server.WithWriteTimeout(5*time.Minute))
-	opts = append(opts, server.WithHostPorts(options.Address))
+	opts = append(opts, server.WithMaxRequestBodySize(bodySize), server.WithReadTimeout(5*time.Minute), server.WithWriteTimeout(5*time.Minute), server.WithHostPorts(options.Address))
 	if options.IdleTimeout > 0 {
 		opts = append(opts, server.WithIdleTimeout(options.IdleTimeout))
 	}
+	if options.H2C {
+		opts = append(opts, server.WithH2C(true))
+	}
 	s := server.New(opts...)
+	if options.H2C {
+		s.AddProtocol("h2", h2Factory.NewServerFactory(h2Config.WithMaxConcurrentStreams(200)))
+	}
 	s.Name = options.ServerName
 	s.Use(middleware.TraceMiddleware, middleware.LoggingMiddleware, recovery.Recovery(recovery.WithRecoveryHandler(middleware.MyRecoveryHandler)))
 	if len(middlewares) > 0 {
@@ -85,7 +90,7 @@ func (server *Server) Run(graceful ...func()) {
 		logger.Info("[Hertz]server has been shutdown")
 	})
 	server.Svr.SetCustomSignalWaiter(waitSignal)
-	logger.Info("[Hertz] server starting on:", server.Options.Address)
+	logger.Info("[Hertz] server starting on:", server.Options.Address, " h2c:", server.Options.H2C)
 	server.Svr.Spin()
 }
 

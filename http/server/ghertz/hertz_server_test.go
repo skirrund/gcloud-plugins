@@ -36,7 +36,8 @@ func TestHertzServer(t *testing.T) {
 	// reg := nacos_registry.NewRegistry(ops)
 	options := server.Options{
 		ServerName: "nacos_reg_test",
-		Address:    ":8080",
+		Address:    ":8899",
+		H2C:        true,
 	}
 	// reg.RegisterInstance()
 	// reg.Subscribe("nacos_reg_test")
@@ -48,10 +49,10 @@ func TestHertzServer(t *testing.T) {
 	srv := NewServer(options, func(engine *hertzServer.Hertz) {
 		engine.GET("/test", func(c context.Context, ctx *app.RequestContext) {
 			//i, err := ctx.WriteString("")
-			var bytes []byte
-			ctx.Write(bytes)
+			//var bytes []byte
+			//ctx.Write(bytes)
 			// fmt.Println(i, err)
-			// ctx.JSON(200, "Get")
+			ctx.JSON(200, "Get")
 		})
 		engine.POST("/test", func(c context.Context, ctx *app.RequestContext) {
 			// mfh, err := ctx.FormFile("file")

@@ -9,11 +9,13 @@ require (
 	github.com/bytedance/sonic v1.14.0
 	github.com/cloudwego/hertz v0.10.2
 	github.com/gofiber/fiber/v2 v2.52.9
+	github.com/hertz-contrib/http2 v0.1.8
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
 	github.com/nats-io/nats.go v1.47.0
-	github.com/skirrund/gcloud v0.13.14
+	github.com/skirrund/gcloud v0.13.16
 	github.com/spf13/viper v1.21.0
 	github.com/valyala/fasthttp v1.64.0
+	golang.org/x/net v0.44.0
 )
 
 require (
@@ -129,7 +131,6 @@ require (
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
-	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

@@ -1,12 +1,11 @@
 package nacos_registry
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/skirrund/gcloud/bootstrap/env"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/registry"
-	"github.com/skirrund/gcloud/utils"
 )
 
 func TestRegistry(t *testing.T) {
@@ -24,11 +23,9 @@ func TestRegistry(t *testing.T) {
 			Version:     "0.1",
 		},
 	}
+	env.GetInstance().Set(env.SERVER_H2C_KEY, true)
 	reg := NewRegistry(ops)
-	i := reg.GetInstance("pbm-common-wechat-service")
-	i1, err := reg.SelectInstances("pbm-common-wechat-service")
-	str, _ := utils.MarshalToString(i1)
-	fmt.Println(str, err)
-	logger.Info(i1)
+	reg.RegisterInstance()
+	i := reg.GetInstance("test-local")
 	logger.Info(i)
 }
