@@ -18,12 +18,12 @@ import (
 func TestXxx(t *testing.T) {
 	var wg sync.WaitGroup
 	start1 := time.Now()
-	for i := 0; i < 3000; i++ {
+	for i := 0; i < 1000; i++ {
 		wg.Go(func() {
 			start := time.Now()
 			defaultHttpClient.Exec(&request.Request{
-				H2C:    false,
-				Url:    "http://127.0.0.1:8080/test",
+				H2C:    true,
+				Url:    "http://127.0.0.1:32761/gateway/api-wechat-dev/nonlogin/v1/web/getAuthWechatUrl",
 				Method: "GET",
 			})
 			fmt.Println("finished:", time.Since(start).Milliseconds(), "ms")

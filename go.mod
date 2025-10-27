@@ -12,7 +12,7 @@ require (
 	github.com/hertz-contrib/http2 v0.1.8
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
 	github.com/nats-io/nats.go v1.47.0
-	github.com/skirrund/gcloud v0.13.17
+	github.com/skirrund/gcloud v0.13.19
 	github.com/spf13/viper v1.21.0
 	github.com/valyala/fasthttp v1.64.0
 	golang.org/x/net v0.44.0

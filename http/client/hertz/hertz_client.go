@@ -58,9 +58,6 @@ func init() {
 	)
 	defaultHttpClient.h2cClient, _ = client.NewClient(
 		client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
-		client.WithMaxIdleConnDuration(DefaultTimeout),
-		client.WithClientReadTimeout(RequestTimeOut),
-		client.WithWriteTimeout(WriteTimeout),
 	)
 	defaultHttpClient.h2cClient.SetClientFactory(factory.NewClientFactory(h2Config.WithAllowHTTP(true), h2Config.WithDialTimeout(1*time.Second)))
 }
@@ -122,11 +119,12 @@ func (hhc HertzHttpClient) Exec(req *request.Request) (r *gResp.Response, err er
 		timeOut = DefaultTimeout
 	}
 	doRequest.SetOptions(config.WithRequestTimeout(timeOut))
-	client := hhc.getClient()
 	if req.H2C {
-		client = defaultHttpClient.h2cClient
+		err = defaultHttpClient.h2cClient.Do(context.Background(), doRequest, response)
+	} else {
+		err = hhc.getClient().Do(context.Background(), doRequest, response)
 	}
-	err = client.Do(context.Background(), doRequest, response)
+
 	if err != nil {
 		logger.ErrorContext(loggerCtx, "[lb-heartz-client] Do error:", err.Error(), ",", reqUrl, ",")
 		return r, err

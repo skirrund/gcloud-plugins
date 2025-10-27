@@ -57,7 +57,18 @@ func NewServer(options gServer.Options, routerProvider func(engine *server.Hertz
 	}
 	s := server.New(opts...)
 	if options.H2C {
-		s.AddProtocol("h2", h2Factory.NewServerFactory(h2Config.WithMaxConcurrentStreams(200)))
+		var h2Opts []h2Config.Option
+		if options.MaxConcurrentStreams > 0 {
+			h2Opts = append(h2Opts, h2Config.WithMaxConcurrentStreams(uint32(options.MaxConcurrentStreams)))
+		} else {
+			h2Opts = append(h2Opts, h2Config.WithMaxConcurrentStreams(256))
+		}
+		if options.IdleTimeout > 0 {
+			h2Opts = append(h2Opts, h2Config.WithIdleTimeout(options.IdleTimeout))
+		} else {
+			h2Opts = append(h2Opts, h2Config.WithIdleTimeout(15*time.Second))
+		}
+		s.AddProtocol("h2", h2Factory.NewServerFactory(h2Opts...))
 	}
 	s.Name = options.ServerName
 	s.Use(middleware.TraceMiddleware, middleware.LoggingMiddleware, recovery.Recovery(recovery.WithRecoveryHandler(middleware.MyRecoveryHandler)))
