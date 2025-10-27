@@ -78,13 +78,13 @@ func LoggingMiddleware(c context.Context, ctx *app.RequestContext) {
 	respCt := string(rResp.Header.ContentType())
 	respBody := getLogBodyStr(bb)
 	traceId := string(ctx.GetHeader(tracer.TraceIDKey))
-	workPool.Execute(func() {
-		requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, traceId, start)
-	})
+	// workPool.Execute(func() {
+	go requestEnd(uri, ct, method, reqBody, respBody, strconv.FormatInt(int64(respStatus), 10), respCt, traceId, start)
+	// })
 }
 
 func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt, traceId string, start time.Time) {
-	logger.Info("\n [Hertz] uri:", uri,
+	logger.Info("\n [Hertz] uri:", uri, ", at:", start.Format(time.DateTime),
 		"\n [Hertz] trace-id:", traceId,
 		"\n [Hertz] content-type:", ct,
 		"\n [Hertz] method:", method,
