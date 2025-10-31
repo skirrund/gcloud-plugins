@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -18,15 +19,16 @@ import (
 func TestXxx(t *testing.T) {
 	var wg sync.WaitGroup
 	start1 := time.Now()
-	for i := 0; i < 500; i++ {
+	for i := 0; i < 1; i++ {
+		strIdx := strconv.Itoa(i)
 		wg.Go(func() {
 			start := time.Now()
-			defaultHttpClient.Exec(&request.Request{
-				H2C:    false,
-				Url:    "http://127.0.0.1:32761/gateway/api-wechat-dev/nonlogin/v1/web/getAuthWechatUrl",
+			resp, _ := defaultHttpClient.Exec(&request.Request{
+				H2C:    true,
+				Url:    "http://127.0.0.1:8899/test?" + strIdx,
 				Method: "GET",
 			})
-			fmt.Println("finished:", time.Since(start).Milliseconds(), "ms")
+			fmt.Println(string(resp.Body), "finished:", time.Since(start).Milliseconds(), "ms")
 		})
 	}
 	wg.Wait()
