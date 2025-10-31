@@ -14,14 +14,14 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/client"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
-	h2Config "github.com/hertz-contrib/http2/config"
-	"github.com/hertz-contrib/http2/factory"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/server/lb"
 	"github.com/skirrund/gcloud/server/request"
 	gResp "github.com/skirrund/gcloud/server/response"
 	"github.com/skirrund/gcloud/tracer"
+	h2Config "github.com/skirrund/hertz-http2/config"
+	"github.com/skirrund/hertz-http2/factory"
 )
 
 type HertzHttpClient struct {

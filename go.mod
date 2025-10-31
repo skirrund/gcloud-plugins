@@ -9,16 +9,14 @@ require (
 	github.com/bytedance/sonic v1.14.1
 	github.com/cloudwego/hertz v0.10.3
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/hertz-contrib/http2 v0.1.8
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.3
 	github.com/nats-io/nats.go v1.47.0
 	github.com/skirrund/gcloud v0.13.21
+	github.com/skirrund/hertz-http2 v0.0.3
 	github.com/spf13/viper v1.21.0
 	github.com/valyala/fasthttp v1.64.0
 	golang.org/x/net v0.46.0
 )
-
-replace github.com/hertz-contrib/http2 => github.com/skirrund/http2 v0.0.1
 
 require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect

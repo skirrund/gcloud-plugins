@@ -16,8 +16,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/protocol"
-	h2Config "github.com/hertz-contrib/http2/config"
-	h2Factory "github.com/hertz-contrib/http2/factory"
 	"github.com/skirrund/gcloud-plugins/http/server/ghertz/middleware"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
@@ -25,6 +23,8 @@ import (
 	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils/validator"
+	h2Config "github.com/skirrund/hertz-http2/config"
+	h2Factory "github.com/skirrund/hertz-http2/factory"
 )
 
 type Server struct {
