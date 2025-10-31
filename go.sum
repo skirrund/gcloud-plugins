@@ -350,8 +350,8 @@ github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
 github.com/skirrund/gcloud v0.13.21 h1:cwQ/vf6B4iPlRTWPQuOn06g7Kd5u3dMk4IyBgpJ0hgU=
 github.com/skirrund/gcloud v0.13.21/go.mod h1:QPHjfnAPpOLRjV0f2iNnvUQnsZzBVNGVN91XDDXVTgQ=
-github.com/skirrund/hertz-http2 v0.0.3 h1:Bjp2lqh8h6N0qt5f7yJ5QhwKgaOW2fRmp8eIly2LVss=
-github.com/skirrund/hertz-http2 v0.0.3/go.mod h1:9OkIdq9xKhXxvNXa65+DGcjZ8ORJXm/8R8Ps/mUX1Ts=
+github.com/skirrund/hertz-http2 v0.0.4 h1:trUEntae9LP7OhXq+CVbP5HecQKBAylYDefTiEbsxjw=
+github.com/skirrund/hertz-http2 v0.0.4/go.mod h1:9OkIdq9xKhXxvNXa65+DGcjZ8ORJXm/8R8Ps/mUX1Ts=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.1.0/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYlVhC/LOxJk7iOWnoo=
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
