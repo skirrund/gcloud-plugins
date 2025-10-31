@@ -18,7 +18,7 @@ require (
 	golang.org/x/net v0.46.0
 )
 
-replace github.com/hertz-contrib/http2 v0.1.8 => github.com/skirrund/http2 v0.0.1
+replace github.com/hertz-contrib/http2 => github.com/skirrund/http2 v0.0.1
 
 require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
