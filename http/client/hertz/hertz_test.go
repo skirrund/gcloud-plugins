@@ -24,8 +24,8 @@ func TestXxx(t *testing.T) {
 		wg.Go(func() {
 			start := time.Now()
 			resp, _ := defaultHttpClient.Exec(&request.Request{
-				H2C:    false,
-				Url:    "http://127.0.0.1:8899/test?" + strIdx,
+				H2C:    true,
+				Url:    "http://127.0.0.1:32100/test?" + strIdx,
 				Method: "GET",
 			})
 			fmt.Println(string(resp.Body), "finished:", time.Since(start).Milliseconds(), "ms")
