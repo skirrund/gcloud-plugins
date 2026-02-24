@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/skirrund/gcloud-plugins/http/server/gfiber/middleware"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/response"
@@ -50,7 +50,7 @@ func NewServer(options server.Options, routerProvider func(engine *fiber.App), m
 		BodyLimit:    bodySize,
 		ReadTimeout:  5 * time.Minute,
 		WriteTimeout: 5 * time.Minute,
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
+		ErrorHandler: func(c fiber.Ctx, err error) error {
 			if e, ok := err.(*fiber.Error); ok {
 				if e.Code == fiber.StatusInternalServerError {
 					c.JSON(response.Fail[any](err.Error()))
@@ -88,7 +88,7 @@ func NewServer(options server.Options, routerProvider func(engine *fiber.App), m
 		s.Use(middleware...)
 	}
 	routerProvider(s)
-	s.Use("/", func(c *fiber.Ctx) error {
+	s.Use("/", func(c fiber.Ctx) error {
 		c.SendStatus(fiber.StatusNotFound)
 		return nil
 	})
@@ -98,11 +98,11 @@ func NewServer(options server.Options, routerProvider func(engine *fiber.App), m
 func getCfg() []any {
 	var handlers []any
 	recoverCfg := recover.Config{
-		Next: func(c *fiber.Ctx) bool {
+		Next: func(c fiber.Ctx) bool {
 			return false
 		},
 		EnableStackTrace: true,
-		StackTraceHandler: func(c *fiber.Ctx, e any) {
+		StackTraceHandler: func(c fiber.Ctx, e any) {
 			logger.Error("[Fiber] recover:", e, "\n", string(debug.Stack()))
 			str, _ := utils.MarshalToString(e)
 			c.JSON(response.Fail[any](str))
@@ -156,8 +156,8 @@ func grace(server *Server, g ...func()) {
 // It supports decoding the following content types based on the Content-Type header:
 // application/json, application/xml, application/x-www-form-urlencoded, multipart/form-data
 // If none of the content types above are matched, it will return a ErrUnprocessableEntity error
-func ShouldBindBody(ctx *fiber.Ctx, obj any) error {
-	err := ctx.BodyParser(obj)
+func ShouldBindBody(ctx fiber.Ctx, obj any) error {
+	err := ctx.Bind().Body(obj)
 	if err != nil {
 		return err
 	}
@@ -168,8 +168,32 @@ func ShouldBindBody(ctx *fiber.Ctx, obj any) error {
 	return nil
 }
 
-func ShouldBindParams(ctx *fiber.Ctx, obj any) error {
-	err := ctx.ParamsParser(obj)
+func ShouldBindParams(ctx fiber.Ctx, obj any) error {
+	err := ctx.Bind().URI(obj)
+	if err != nil {
+		return err
+	}
+
+	err = validator.ValidateStruct(obj)
+	if err != nil {
+		return errors.New(validator.ErrResp(err))
+	}
+	return nil
+}
+
+func ShouldBindQuery(ctx fiber.Ctx, obj any) error {
+	err := ctx.Bind().Query(obj)
+	if err != nil {
+		return err
+	}
+	err = validator.ValidateStruct(obj)
+	if err != nil {
+		return errors.New(validator.ErrResp(err))
+	}
+	return nil
+}
+func ShouldBindHeader(ctx fiber.Ctx, obj any) error {
+	err := ctx.Bind().Header(obj)
 	if err != nil {
 		return err
 	}
@@ -180,44 +204,21 @@ func ShouldBindParams(ctx *fiber.Ctx, obj any) error {
 	return nil
 }
 
-func ShouldBindQuery(ctx *fiber.Ctx, obj any) error {
-	err := ctx.QueryParser(obj)
-	if err != nil {
-		return err
-	}
-	err = validator.ValidateStruct(obj)
-	if err != nil {
-		return errors.New(validator.ErrResp(err))
-	}
-	return nil
-}
-func ShouldBindHeader(ctx *fiber.Ctx, obj any) error {
-	err := ctx.ReqHeaderParser(obj)
-	if err != nil {
-		return err
-	}
-	err = validator.ValidateStruct(obj)
-	if err != nil {
-		return errors.New(validator.ErrResp(err))
-	}
-	return nil
-}
-
-func GetHeader(ctx *fiber.Ctx, key string) string {
+func GetHeader(ctx fiber.Ctx, key string) string {
 	return string(ctx.Request().Header.Peek(key))
 }
 
-func CheckQueryParamsWithErrorMsg(name string, v *string, errorMsg string, ctx *fiber.Ctx) bool {
+func CheckQueryParamsWithErrorMsg(name string, v *string, errorMsg string, ctx fiber.Ctx) bool {
 	str := ctx.Query(name)
 	return CheckParamsWithErrorMsg(name, str, v, errorMsg, ctx)
 }
 
-func CheckHeaderParamsWithErrorMsg(name string, v *string, errorMsg string, ctx *fiber.Ctx) bool {
+func CheckHeaderParamsWithErrorMsg(name string, v *string, errorMsg string, ctx fiber.Ctx) bool {
 	str := GetHeader(ctx, name)
 	return CheckParamsWithErrorMsg(name, str, v, errorMsg, ctx)
 }
 
-func CheckParamsWithErrorMsg(name string, str string, v *string, errorMsg string, ctx *fiber.Ctx) bool {
+func CheckParamsWithErrorMsg(name string, str string, v *string, errorMsg string, ctx fiber.Ctx) bool {
 	*v = str
 	if len(str) == 0 {
 		if len(errorMsg) == 0 {
@@ -230,7 +231,7 @@ func CheckParamsWithErrorMsg(name string, str string, v *string, errorMsg string
 	return true
 }
 
-func CheckPostFormParamsWithErrorMsg(name string, v *string, errorMsg string, ctx *fiber.Ctx) bool {
+func CheckPostFormParamsWithErrorMsg(name string, v *string, errorMsg string, ctx fiber.Ctx) bool {
 	str := ctx.FormValue(name)
 	if len(str) == 0 {
 		str = ctx.Query(name)
@@ -238,19 +239,19 @@ func CheckPostFormParamsWithErrorMsg(name string, v *string, errorMsg string, ct
 	return CheckParamsWithErrorMsg(name, str, v, errorMsg, ctx)
 }
 
-func CheckQueryParams(name string, v *string, ctx *fiber.Ctx) bool {
+func CheckQueryParams(name string, v *string, ctx fiber.Ctx) bool {
 	return CheckQueryParamsWithErrorMsg(name, v, "", ctx)
 }
 
-func CheckPostFormParams(name string, v *string, ctx *fiber.Ctx) bool {
+func CheckPostFormParams(name string, v *string, ctx fiber.Ctx) bool {
 	return CheckPostFormParamsWithErrorMsg(name, v, "", ctx)
 }
 
-func CheckHeaderParams(name string, v *string, ctx *fiber.Ctx) bool {
+func CheckHeaderParams(name string, v *string, ctx fiber.Ctx) bool {
 	return CheckHeaderParamsWithErrorMsg(name, v, "", ctx)
 }
-func QueryArray(ctx *fiber.Ctx, name string) []string {
-	array := ctx.Context().QueryArgs().PeekMulti(name)
+func QueryArray(ctx fiber.Ctx, name string) []string {
+	array := ctx.RequestCtx().QueryArgs().PeekMulti(name)
 	var params []string
 	if len(array) > 0 {
 		for _, a := range array {
@@ -268,8 +269,8 @@ func QueryArray(ctx *fiber.Ctx, name string) []string {
 	}
 	return params
 }
-func PostFormArray(ctx *fiber.Ctx, name string) []string {
-	array := ctx.Context().PostArgs().PeekMulti(name)
+func PostFormArray(ctx fiber.Ctx, name string) []string {
+	array := ctx.RequestCtx().PostArgs().PeekMulti(name)
 	var params []string
 	if len(array) > 0 {
 		for _, a := range array {
@@ -292,7 +293,7 @@ func PostFormArray(ctx *fiber.Ctx, name string) []string {
 	}
 }
 
-func GetCookie(name string, ctx *fiber.Ctx) string {
+func GetCookie(name string, ctx fiber.Ctx) string {
 	val := ctx.Cookies(name)
 	if len(val) > 0 {
 		val, _ = url.QueryUnescape(val)
@@ -302,7 +303,7 @@ func GetCookie(name string, ctx *fiber.Ctx) string {
 
 // del cookie
 // if len(keys)==0 this function will delete all cookies
-func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
+func ClearCookie(ctx fiber.Ctx, domain string, path string, keys ...string) {
 	length := len(keys)
 	ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
 		k := string(key)
@@ -341,7 +342,7 @@ func ClearCookie(ctx *fiber.Ctx, domain string, path string, keys ...string) {
 	})
 }
 
-func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
+func SetCookie(c cookie.Cookie, ctx fiber.Ctx) {
 	if len(c.Key) <= 0 {
 		return
 	}
@@ -360,7 +361,7 @@ func SetCookie(c cookie.Cookie, ctx *fiber.Ctx) {
 	ctx.Cookie(fCookie)
 }
 
-func GetTraceContext(ctx *fiber.Ctx) context.Context {
+func GetTraceContext(ctx fiber.Ctx) context.Context {
 	id := ctx.Request().UserValue(tracer.TraceIDKey)
 	if id != nil {
 		return tracer.NewContextFromTraceId(id.(string))

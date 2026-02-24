@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/server/http/cookie"
 	"github.com/skirrund/gcloud/server/lb"
@@ -152,11 +152,12 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	r.Body = b
 	ck := fasthttp.AcquireCookie()
 	defer fasthttp.ReleaseCookie(ck)
-	response.Header.VisitAllCookie(func(key, value []byte) {
-		ck.ParseBytes(value)
+	cseq := response.Header.Cookies()
+	for k, v := range cseq {
+		ck.ParseBytes(v)
 		val := string(ck.Value())
 		val, _ = url.QueryUnescape(val)
-		k := string(key)
+		k := string(k)
 		r.Cookies[k] = &cookie.Cookie{
 			Key:      k,
 			Value:    val,
@@ -168,15 +169,16 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 			Secure:   ck.Secure(),
 			SameSite: getSameSite(ck.SameSite()),
 		}
-	})
-	response.Header.VisitAll(func(key, value []byte) {
-		k := string(key)
-		val := string(value)
+	}
+	hseq := response.Header.All()
+	for k, v := range hseq {
+		k := string(k)
+		val := string(v)
 		vals := r.Headers[k]
 		logger.InfoContext(loggerCtx, "[lb-fasthttp] header:", k, "=", val)
 		vals = append(vals, val)
 		r.Headers[k] = vals
-	})
+	}
 	if sc != http.StatusOK && !req.IsProxy {
 		logger.ErrorContext(loggerCtx, "[lb-fasthttp] StatusCode error:", sc, ",", reqUrl, ",", string(b), ",", location)
 		if req.IsProxy && sc >= http.StatusMultipleChoices && sc <= http.StatusPermanentRedirect {
@@ -187,7 +189,7 @@ func (c FastHttpClient) Exec(req *request.Request) (r *gResp.Response, err error
 	return r, nil
 }
 
-func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Duration) error {
+func (c FastHttpClient) Proxy(targetUrl string, ctx fiber.Ctx, timeout time.Duration) error {
 	logger.Info("[startProxy-fasthttp]:", targetUrl)
 	creq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(creq)
@@ -221,15 +223,16 @@ func (c FastHttpClient) Proxy(targetUrl string, ctx *fiber.Ctx, timeout time.Dur
 	if err != nil {
 		return err
 	}
-	resp.Header.VisitAll(func(key, value []byte) {
-		ctx.Response().Header.SetBytesKV(key, value)
-	})
+	hseq := resp.Header.All()
+	for k, v := range hseq {
+		ctx.Response().Header.SetBytesKV(k, v)
+	}
 	sc := resp.StatusCode()
 	ctx.Status(sc).Response().SetBody(resp.Body())
 	return nil
 }
 
-func (fhc FastHttpClient) ProxyService(serviceName, path string, ctx *fiber.Ctx, timeout time.Duration) error {
+func (fhc FastHttpClient) ProxyService(serviceName, path string, ctx fiber.Ctx, timeout time.Duration) error {
 	logger.Info("[startProxy-fasthttp]:", serviceName, "[path:", path)
 	gRequest := &request.Request{
 		ServiceName: serviceName,
@@ -266,9 +269,9 @@ func (fhc FastHttpClient) ProxyService(serviceName, path string, ctx *fiber.Ctx,
 		}
 	}
 	sc := gresp.StatusCode
-	ctx.Context().SetContentType(gresp.ContentType)
-	ctx.Context().SetBody(gresp.Body)
-	ctx.Context().SetStatusCode(sc)
+	fResp.Header.SetContentType(gresp.ContentType)
+	fResp.SetBody(gresp.Body)
+	fResp.SetStatusCode(sc)
 	return nil
 }
 

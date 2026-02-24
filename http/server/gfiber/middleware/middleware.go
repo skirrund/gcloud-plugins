@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/skirrund/gcloud/logger"
 	"github.com/skirrund/gcloud/tracer"
 	"github.com/skirrund/gcloud/utils/worker"
@@ -20,7 +20,7 @@ var reg = regexp.MustCompile(`.*\.(js|css|png|jpg|jpeg|gif|svg|webp|bmp|html|htm
 
 var workPool = worker.Init(math.MaxUint16)
 
-func Cors(c *fiber.Ctx) error {
+func Cors(c fiber.Ctx) error {
 	request := c.Request()
 	method := string(request.Header.Method())
 	origin := string(request.Header.Peek("Origin"))
@@ -44,7 +44,7 @@ func getLogBodyStr(bb []byte) string {
 	return string(bb)
 }
 
-func LoggingMiddleware(ctx *fiber.Ctx) error {
+func LoggingMiddleware(ctx fiber.Ctx) error {
 	start := time.Now()
 	reqBody := getLogBodyStr(ctx.Body())
 	req := ctx.Request()
@@ -89,7 +89,7 @@ func requestEnd(uri, ct, method, reqBody, respBody, respStatus, respCt, traceId 
 		"\n [Fiber] cost:"+strconv.FormatInt(time.Since(start).Milliseconds(), 10)+"ms")
 }
 
-func TraceMiddleware(ctx *fiber.Ctx) error {
+func TraceMiddleware(ctx fiber.Ctx) error {
 	traceId := ctx.Get(tracer.TraceIDKey)
 	if len(traceId) == 0 {
 		traceId = tracer.GenerateId()

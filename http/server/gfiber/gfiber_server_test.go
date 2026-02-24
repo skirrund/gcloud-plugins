@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/skirrund/gcloud-plugins/http/client/fasthttp"
 	nacos_registry "github.com/skirrund/gcloud-plugins/nacos/registry"
 	"github.com/skirrund/gcloud/bootstrap"
@@ -48,7 +48,7 @@ func TestHertzServer(t *testing.T) {
 	bootstrap.MthApplication = &gApp
 	//lb.GetInstance().SetHttpClient(fasthttp.GetDefaultClient())
 	srv := NewServer(options, func(engine *fiber.App) {
-		engine.Post("/test", func(ctx *fiber.Ctx) error {
+		engine.Post("/test", func(ctx fiber.Ctx) error {
 			// mfh, _ := ctx.FormFile("file")
 			// mf, _ := mfh.Open()
 			// defer mf.Close()
@@ -81,14 +81,14 @@ func TestHertzServer(t *testing.T) {
 			return ctx.JSON("ok-fiber")
 
 		})
-		engine.Get("/del", func(ctx *fiber.Ctx) error {
+		engine.Get("/del", func(ctx fiber.Ctx) error {
 
 			//t := &Test{}
 			// SetCookie()
 			//ctx.JSON(http.StatusOK, s)
 			return nil
 		})
-		engine.Post("/test1", func(ctx *fiber.Ctx) error {
+		engine.Post("/test1", func(ctx fiber.Ctx) error {
 			return fasthttp.GetDefaultClient().ProxyService("nacos_reg_test", "/test", ctx, 5*time.Minute)
 		})
 	})
