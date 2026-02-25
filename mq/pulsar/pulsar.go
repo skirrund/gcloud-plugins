@@ -2,6 +2,7 @@ package pulsar
 
 import (
 	"errors"
+	"os"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -39,6 +40,10 @@ const (
 
 var pulsarClient *PulsarClient
 var once sync.Once
+
+func init() {
+	os.Setenv("GODEBUG", "urlstrictcolons=0")
+}
 
 func NewClient(url string, connectionTimeoutSecond int64, operationTimeoutSecond int64, appName string) mq.IClient {
 	if pulsarClient != nil {
