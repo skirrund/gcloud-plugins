@@ -352,8 +352,8 @@ github.com/shoenig/go-m1cpu v0.1.6 h1:nxdKQNcEB6vzgA2E2bvzKIYRuNj7XNJ4S/aRSwKzFt
 github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg9SUEw2VQ=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
-github.com/skirrund/gcloud v0.14.0 h1:FMwnzFLMX+iskjkUet3aQLACAhuTUvsNRITryxvTtd4=
-github.com/skirrund/gcloud v0.14.0/go.mod h1:sDnTcJ+IwPe/8TruSmquxr7pen2cjC5RxopSH0s+Vfg=
+github.com/skirrund/gcloud v0.14.2 h1:cStvAZfioDTCIDbPHQv9MJBV1nfX9b1x8gN2k3OJikg=
+github.com/skirrund/gcloud v0.14.2/go.mod h1:sDnTcJ+IwPe/8TruSmquxr7pen2cjC5RxopSH0s+Vfg=
 github.com/skirrund/hertz-http2 v0.0.5 h1:P3zXC495BebZa3V15ASOwHQ06z0RPtPWd/tfGNTOBvY=
 github.com/skirrund/hertz-http2 v0.0.5/go.mod h1:WpcJyFrYIB+mA9jiYqEVTaUz/hRWIy3N4PfPNZG451s=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
