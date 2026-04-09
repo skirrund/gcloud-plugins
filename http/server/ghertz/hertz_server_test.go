@@ -3,8 +3,6 @@ package ghertz
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 	"testing"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -195,18 +193,22 @@ func TestGinServer(t *testing.T) {
 			ctx.JSON(200, "Get")
 		})
 		engine.POST("/upload", func(ctx *gin.Context) {
-			if fh, err := ctx.FormFile("file"); err == nil {
-				f, err := fh.Open()
-				if err != nil {
-					ctx.JSON(200, err.Error())
-					return
-				}
-				fb, _ := io.ReadAll(f)
-				os.WriteFile("/Users/jerry.shi/Desktop/test_"+fh.Filename, fb, os.ModePerm)
-				ctx.JSON(200, "success")
-			} else {
-				ctx.JSON(200, err.Error())
-			}
+			t := ctx.PostForm("dictCodes")
+			// bbytes := ctx.Request.Body
+			// bodyStr, _ := io.ReadAll(bbytes)
+			fmt.Println(string(t))
+			// if fh, err := ctx.FormFile("file"); err == nil {
+			// 	f, err := fh.Open()
+			// 	if err != nil {
+			// 		ctx.JSON(200, err.Error())
+			// 		return
+			// 	}
+			// 	fb, _ := io.ReadAll(f)
+			// 	os.WriteFile("/Users/jerry.shi/Desktop/test_"+fh.Filename, fb, os.ModePerm)
+			// 	ctx.JSON(200, "success")
+			// } else {
+			// 	ctx.JSON(200, err.Error())
+			// }
 		})
 		engine.POST("/test", func(ctx *gin.Context) {
 			// mfh, err := ctx.FormFile("file")
