@@ -3,18 +3,18 @@ module github.com/skirrund/gcloud-plugins
 go 1.25.0
 
 require (
-	github.com/apache/pulsar-client-go v0.18.0
+	github.com/apache/pulsar-client-go v0.19.0
 	github.com/bytedance/sonic v1.15.0
 	github.com/cloudwego/hertz v0.10.4
 	github.com/gin-gonic/gin v1.12.0
 	github.com/gofiber/fiber/v3 v3.1.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
-	github.com/nats-io/nats.go v1.50.0
-	github.com/skirrund/gcloud v0.14.10
+	github.com/nats-io/nats.go v1.51.0
+	github.com/skirrund/gcloud v0.14.12
 	github.com/skirrund/hertz-http2 v0.0.5
 	github.com/spf13/viper v1.21.0
 	github.com/valyala/fasthttp v1.70.0
-	golang.org/x/net v0.52.0
+	golang.org/x/net v0.53.0
 )
 
 require (
@@ -132,12 +132,12 @@ require (
 	go.uber.org/zap/exp v0.3.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.22.0 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
-	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250227231956-55c901821b1e // indirect
 	google.golang.org/grpc v1.71.0 // indirect
