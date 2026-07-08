@@ -31,3 +31,5 @@ DEFAULT_GROUP@@hertz_test
 pulsar_test.go
 DEFAULT_GROUP@@nacos_reg_test
 pbm-common-service-test.yaml@@DEFAULT_GROUP@@PBM-Service
+DEFAULT_GROUP@@bd_nacos_reg_test
+test-dev.yaml@@DEFAULT_GROUP@@PBM-Service
